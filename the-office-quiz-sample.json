@@ -1,0 +1,29 @@
+[
+  {
+    "type": "open-ended",
+    "question": "Name one of the running jokes or pranks that Jim plays on Dwight throughout the series.",
+    "acceptedAnswers": ["Putting Dwight's stapler in Jello", "Making Dwight believe it's Friday when it's Thursday", "Convincing Dwight the computer is sentient", "Moving Dwight's desk to the bathroom"]
+  },
+  {
+    "type": "multiple-choice",
+    "question": "What position does Michael Scott hold at Dunder Mifflin's Scranton branch?",
+    "options": [
+      "Regional Manager",
+      "Assistant Regional Manager",
+      "Sales Representative",
+      "Vice President of Northeast Sales"
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "type": "multiple-choice",
+    "question": "Which character originally worked in the warehouse before being promoted to a sales position?",
+    "options": [
+      "Kevin Malone",
+      "Andy Bernard",
+      "Darryl Philbin",
+      "Roy Anderson"
+    ],
+    "correctAnswer": 2
+  }
+]
