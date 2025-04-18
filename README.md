@@ -1,4 +1,4 @@
-# Modern Quiz App
+# Quiz App
 
 A modern, user-friendly quiz application that supports multiple-choice and open-ended questions. The app allows users to import quiz questions from JSON files, take quizzes, and export results in various formats including CSV and Anki-compatible formats.
 
