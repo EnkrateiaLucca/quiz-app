@@ -6,7 +6,7 @@ A modern, user-friendly quiz application that supports multiple-choice and open-
 
 - Multiple choice and open-ended question support
 - JSON-based quiz file import
-- Real-time feedback on answers
+- Real-time feedback on answers (visual)
 - Score tracking
 - Export results to CSV
 - Export to Anki format for flashcard creation
@@ -77,5 +77,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Thanks to all contributors who have helped improve this project
 - Inspired by the need for simple, effective quiz tools 
