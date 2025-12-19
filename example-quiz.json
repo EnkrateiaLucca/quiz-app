@@ -13,7 +13,9 @@
       "Sales Representative",
       "Vice President of Northeast Sales"
     ],
-    "correctAnswer": 0
+    "correctAnswer": 0,
+    "explanation": "Michael Scott serves as the Regional Manager of Dunder Mifflin's Scranton branch throughout most of the series.",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Michael_Scott_(The_Office)"
   },
   {
     "type": "multiple-choice",
@@ -24,6 +26,8 @@
       "Darryl Philbin",
       "Roy Anderson"
     ],
-    "correctAnswer": 2
+    "correctAnswer": 2,
+    "explanation": "Darryl Philbin started as a warehouse worker and was later promoted to work in the office.",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Darryl_Philbin"
   }
 ]

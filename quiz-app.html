@@ -490,11 +490,110 @@
             color: var(--ink-black);
         }
 
-        /* Score Display */
+        /* Score Display - Hierarchical Design */
+        .score-display {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+            padding: var(--space-xl);
+            background-color: var(--gray-100);
+            border: 2px solid var(--ink-black);
+        }
+
+        .score-display .score-label {
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85em;
+            color: var(--gray-600);
+            margin-bottom: var(--space-sm);
+        }
+
         #score {
             font-family: var(--font-mono);
             font-weight: 700;
-            font-size: 1.2em;
+            font-size: 3em;
+            color: var(--ink-black);
+            display: block;
+        }
+
+        .score-subtext {
+            font-size: 0.9em;
+            color: var(--gray-500);
+            margin-top: var(--space-xs);
+        }
+
+        /* Results Sections */
+        .results-section {
+            margin-bottom: var(--space-xl);
+        }
+
+        .results-section-title {
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8em;
+            color: var(--gray-500);
+            margin-bottom: var(--space-md);
+            padding-bottom: var(--space-sm);
+            border-bottom: 1px solid var(--gray-300);
+        }
+
+        /* Enhanced Feedback Cards with Status Badges */
+        .feedback .status-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+            margin-left: var(--space-sm);
+            border: 1px solid;
+        }
+
+        .feedback.correct .status-badge {
+            background-color: var(--sage);
+            color: white;
+            border-color: var(--sage);
+        }
+
+        .feedback.incorrect .status-badge {
+            background-color: var(--coral);
+            color: white;
+            border-color: var(--coral);
+        }
+
+        .feedback.skipped .status-badge {
+            background-color: var(--golden);
+            color: var(--ink-black);
+            border-color: var(--golden);
+        }
+
+        /* Button Groups */
+        .button-group-primary {
+            display: flex;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .button-group-secondary {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .button-group-secondary button {
+            padding: 10px 16px;
+            font-size: 0.8em;
+        }
+
+        .button-group-label {
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.7em;
+            color: var(--gray-500);
+            margin-bottom: var(--space-sm);
+            display: block;
         }
 
         /* Question Progress */
@@ -555,6 +654,24 @@
             color: #9a7b0a;
         }
 
+        /* Source URL Link Styling */
+        .source-link {
+            color: var(--sky);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .source-link:hover {
+            border-bottom-color: var(--sky);
+        }
+
+        .source-link::after {
+            content: ' ↗';
+            font-size: 0.85em;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: var(--space-lg) var(--space-md);
@@ -610,6 +727,24 @@
             #prevQuestion {
                 order: 3;
             }
+
+            .button-group-primary {
+                flex-direction: column;
+            }
+
+            .button-group-primary button {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .button-group-secondary button {
+                flex: 1;
+                min-width: 80px;
+            }
+
+            #score {
+                font-size: 2.2em;
+            }
         }
     </style>
 </head>
@@ -636,7 +771,8 @@
     <span class="json-key">"type"</span>: <span class="json-string">"multiple-choice"</span>,
     <span class="json-key">"options"</span>: [<span class="json-string">"London"</span>, <span class="json-string">"Berlin"</span>, <span class="json-string">"Paris"</span>, <span class="json-string">"Madrid"</span>],
     <span class="json-key">"correctAnswer"</span>: <span class="json-number">2</span>,
-    <span class="json-key">"explanation"</span>: <span class="json-string">"Paris has been the capital since 987 AD."</span>
+    <span class="json-key">"explanation"</span>: <span class="json-string">"Paris has been the capital since 987 AD."</span>,
+    <span class="json-key">"sourceUrl"</span>: <span class="json-string">"https://en.wikipedia.org/wiki/Paris"</span>
   },
   {
     <span class="json-key">"question"</span>: <span class="json-string">"What is 2 + 2?"</span>,
@@ -665,14 +801,30 @@
         </div>
         <div id="resultContainer" style="display: none;">
             <h2>Quiz Results</h2>
-            <p>Score: <span id="score"></span></p>
-            <div id="feedback"></div>
-            <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px;">
-                <button id="retakeSameQuiz">Retake Quiz</button>
-                <button id="loadNewQuiz">New Quiz</button>
-                <button id="downloadCSV">CSV Export</button>
-                <button id="downloadMD">LLM Export</button>
-                <button id="exportToAnki">Anki Export</button>
+
+            <div class="score-display">
+                <div class="score-label">Your Score</div>
+                <span id="score"></span>
+                <div id="scoreSubtext" class="score-subtext"></div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-section-title">Question Breakdown</div>
+                <div id="feedback"></div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-section-title">Actions</div>
+                <div class="button-group-primary">
+                    <button id="retakeSameQuiz">Retake Quiz</button>
+                    <button id="loadNewQuiz">New Quiz</button>
+                </div>
+                <span class="button-group-label">Export Results</span>
+                <div class="button-group-secondary">
+                    <button id="downloadCSV">CSV</button>
+                    <button id="downloadMD">LLM Review</button>
+                    <button id="exportToAnki">Anki Cards</button>
+                </div>
             </div>
         </div>
 
@@ -763,7 +915,7 @@
             if (isAnswered) {
                 const result = results.find(r => r.questionIndex === currentQuestion);
                 if (result) {
-                    showFeedback(result.isCorrect, result.skipped, result.correctAnswer, question.explanation);
+                    showFeedback(result.isCorrect, result.skipped, result.correctAnswer, question.explanation, result.sourceUrl);
                 }
                 submitButton.style.display = 'none';
                 skipQuestion.style.display = 'none';
@@ -826,7 +978,7 @@
             }
         }
 
-        function showFeedback(isCorrect, skipped, correctAnswer, explanation) {
+        function showFeedback(isCorrect, skipped, correctAnswer, explanation, sourceUrl) {
             let feedbackClass = isCorrect ? 'correct' : (skipped ? 'skipped' : 'incorrect');
             let title = isCorrect ? 'Correct!' : (skipped ? 'Skipped' : 'Incorrect');
 
@@ -835,6 +987,7 @@
                 <div class="feedback-title">${title}</div>
                 <p><strong>Correct answer:</strong> ${correctAnswer}</p>
                 ${explanation ? `<p><strong>Explanation:</strong> ${explanation}</p>` : ''}
+                ${sourceUrl ? `<p><strong>Source:</strong> <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" class="source-link">${sourceUrl}</a></p>` : ''}
             `;
             questionFeedback.style.display = 'block';
         }
@@ -890,11 +1043,12 @@
                 isCorrect: isCorrect,
                 skipped: false,
                 explanation: question.explanation || null,
+                sourceUrl: question.sourceUrl || null,
                 type: question.type
             });
 
             // Show feedback immediately
-            showFeedback(isCorrect, false, correctAnswer, question.explanation);
+            showFeedback(isCorrect, false, correctAnswer, question.explanation, question.sourceUrl);
 
             // Update button visibility
             submitButton.style.display = 'none';
@@ -926,11 +1080,12 @@
                 isCorrect: false,
                 skipped: true,
                 explanation: question.explanation || null,
+                sourceUrl: question.sourceUrl || null,
                 type: question.type
             });
 
             // Show feedback immediately
-            showFeedback(false, true, correctAnswer, question.explanation);
+            showFeedback(false, true, correctAnswer, question.explanation, question.sourceUrl);
 
             // Disable textarea if open-ended
             const textArea = optionsElement.querySelector('.open-ended-answer');
@@ -977,19 +1132,32 @@
             questionContainer.style.display = 'none';
             resultContainer.style.display = 'block';
             const skippedCount = results.filter(r => r.skipped).length;
-            scoreElement.textContent = `${score} / ${questions.length}` + (skippedCount > 0 ? ` (${skippedCount} skipped)` : '');
+            const incorrectCount = results.filter(r => !r.isCorrect && !r.skipped).length;
+            const percentage = Math.round((score / questions.length) * 100);
+
+            // Update score display
+            scoreElement.textContent = `${score} / ${questions.length}`;
+
+            // Build subtext with percentage and stats
+            const subtextElement = document.getElementById('scoreSubtext');
+            let subtextParts = [`${percentage}%`];
+            if (skippedCount > 0) subtextParts.push(`${skippedCount} skipped`);
+            if (incorrectCount > 0) subtextParts.push(`${incorrectCount} incorrect`);
+            subtextElement.textContent = subtextParts.join(' · ');
 
             // Sort results by question index for proper display order
             const sortedResults = [...results].sort((a, b) => a.questionIndex - b.questionIndex);
 
             feedbackElement.innerHTML = sortedResults.map((result) => {
                 let feedbackClass = result.isCorrect ? 'correct' : (result.skipped ? 'skipped' : 'incorrect');
-                let statusLabel = result.isCorrect ? '' : (result.skipped ? ' (Skipped)' : '');
+                let badgeText = result.isCorrect ? 'Correct' : (result.skipped ? 'Skipped' : 'Incorrect');
                 return `
                 <div class="feedback ${feedbackClass}">
-                    <p><strong>Question ${result.questionIndex + 1}${statusLabel}:</strong> ${result.question}</p>
+                    <p><strong>Question ${result.questionIndex + 1}</strong><span class="status-badge">${badgeText}</span></p>
+                    <p>${result.question}</p>
                     <p>Your answer: ${result.userAnswer}</p>
                     <p>Correct answer: ${result.correctAnswer}</p>
+                    ${result.sourceUrl ? `<p>Source: <a href="${result.sourceUrl}" target="_blank" rel="noopener noreferrer" class="source-link">${result.sourceUrl}</a></p>` : ''}
                 </div>
             `}).join('');
         }
