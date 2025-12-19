@@ -383,8 +383,47 @@
             background-color: #ffffff;
             border: 2px solid var(--ink-black);
             border-radius: 0;
-            padding: var(--space-lg);
             margin-top: var(--space-lg);
+        }
+
+        .example-box summary {
+            color: var(--ink-black);
+            font-weight: 700;
+            padding: var(--space-md) var(--space-lg);
+            font-size: 1.1em;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background-color 0.2s ease;
+        }
+
+        .example-box summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .example-box summary::after {
+            content: '+';
+            font-size: 1.5em;
+            font-weight: 700;
+            transition: transform 0.2s ease;
+        }
+
+        .example-box[open] summary::after {
+            content: '−';
+        }
+
+        .example-box summary:hover {
+            background-color: var(--gray-100);
+        }
+
+        .example-box .example-content {
+            padding: var(--space-lg);
+            border-top: 2px solid var(--gray-300);
         }
 
         .example-title {
@@ -458,6 +497,64 @@
             font-size: 1.2em;
         }
 
+        /* Question Progress */
+        .question-progress {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            color: var(--gray-600);
+            margin-bottom: var(--space-md);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Button Row */
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            align-items: center;
+        }
+
+        /* Question Feedback */
+        #questionFeedback {
+            margin-top: var(--space-lg);
+            padding: var(--space-md);
+            border-radius: 0;
+            border-left: 4px solid;
+        }
+
+        #questionFeedback.correct {
+            background-color: var(--sage-light);
+            border-color: var(--sage);
+        }
+
+        #questionFeedback.incorrect {
+            background-color: var(--coral-light);
+            border-color: var(--coral);
+        }
+
+        #questionFeedback.skipped {
+            background-color: var(--golden-light);
+            border-color: var(--golden);
+        }
+
+        #questionFeedback .feedback-title {
+            font-weight: 700;
+            margin-bottom: var(--space-sm);
+        }
+
+        #questionFeedback.correct .feedback-title {
+            color: var(--sage);
+        }
+
+        #questionFeedback.incorrect .feedback-title {
+            color: var(--coral);
+        }
+
+        #questionFeedback.skipped .feedback-title {
+            color: #9a7b0a;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: var(--space-lg) var(--space-md);
@@ -500,6 +597,19 @@
                 margin: var(--space-sm) 0;
                 margin-left: 0;
             }
+
+            .button-row {
+                flex-direction: column;
+            }
+
+            .button-row button {
+                width: 100%;
+                margin: var(--space-xs) 0;
+            }
+
+            #prevQuestion {
+                order: 3;
+            }
         }
     </style>
 </head>
@@ -517,9 +627,10 @@
                 <button id="startQuiz" disabled>Start Quiz</button>
             </div>
 
-            <div class="example-box">
-                <div class="example-title">Expected JSON File Format:</div>
-                <div class="json-example">[
+            <details class="example-box">
+                <summary>Expected JSON File Format</summary>
+                <div class="example-content">
+                    <div class="json-example">[
   {
     <span class="json-key">"question"</span>: <span class="json-string">"What is the capital of France?"</span>,
     <span class="json-key">"type"</span>: <span class="json-string">"multiple-choice"</span>,
@@ -534,15 +645,22 @@
     <span class="json-key">"explanation"</span>: <span class="json-string">"Basic addition: 2+2=4"</span>
   }
 ]</div>
-            </div>
+                </div>
+            </details>
         </div>
 
         <div id="questionContainer" style="display: none;">
+            <div class="question-progress">
+                <span id="questionProgress"></span>
+            </div>
             <h2 id="question"></h2>
             <div class="options" id="options"></div>
-            <div style="margin-top: 20px;">
+            <div id="questionFeedback" style="display: none;"></div>
+            <div class="button-row" style="margin-top: 20px;">
+                <button id="prevQuestion" class="btn-secondary">← Previous</button>
                 <button id="submit">Submit</button>
-                <button id="skipQuestion" class="skip-btn">I Don't Know</button>
+                <button id="skipQuestion" class="skip-btn">Skip →</button>
+                <button id="nextQuestion" class="btn-info" style="display: none;">Next Question →</button>
             </div>
         </div>
         <div id="resultContainer" style="display: none;">
@@ -563,6 +681,7 @@
         let currentQuestion = 0;
         let score = 0;
         let results = [];
+        let answeredQuestions = new Set(); // Track which questions have been answered
 
         const fileInput = document.getElementById('fileInput');
         const startQuiz = document.getElementById('startQuiz');
@@ -580,6 +699,10 @@
         const loadNewQuiz = document.getElementById('loadNewQuiz');
         const downloadMD = document.getElementById('downloadMD');
         const skipQuestion = document.getElementById('skipQuestion');
+        const nextQuestion = document.getElementById('nextQuestion');
+        const prevQuestion = document.getElementById('prevQuestion');
+        const questionFeedback = document.getElementById('questionFeedback');
+        const questionProgress = document.getElementById('questionProgress');
 
         fileInput.addEventListener('change', handleFileUpload);
         startQuiz.addEventListener('click', startQuizHandler);
@@ -589,6 +712,8 @@
         loadNewQuiz.addEventListener('click', loadNewQuizHandler);
         downloadMD.addEventListener('click', downloadMarkdownResults);
         skipQuestion.addEventListener('click', skipQuestionHandler);
+        nextQuestion.addEventListener('click', goToNextQuestion);
+        prevQuestion.addEventListener('click', goToPrevQuestion);
 
         function handleFileUpload(event) {
             const file = event.target.files[0];
@@ -610,6 +735,7 @@
             currentQuestion = 0;
             score = 0;
             results = [];
+            answeredQuestions = new Set();
             initialPage.style.display = 'none';
             questionContainer.style.display = 'block';
             resultContainer.style.display = 'none';
@@ -618,8 +744,41 @@
 
         function displayQuestion() {
             const question = questions[currentQuestion];
-            questionElement.textContent = `Question ${currentQuestion + 1}: ${question.question}`;
+            const isAnswered = answeredQuestions.has(currentQuestion);
+
+            // Update progress indicator
+            questionProgress.textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            questionElement.textContent = question.question;
             optionsElement.innerHTML = '';
+
+            // Reset feedback area
+            questionFeedback.style.display = 'none';
+            questionFeedback.className = '';
+            questionFeedback.innerHTML = '';
+
+            // Update navigation buttons
+            prevQuestion.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+
+            // If already answered, show feedback and hide submit/skip
+            if (isAnswered) {
+                const result = results.find(r => r.questionIndex === currentQuestion);
+                if (result) {
+                    showFeedback(result.isCorrect, result.skipped, result.correctAnswer, question.explanation);
+                }
+                submitButton.style.display = 'none';
+                skipQuestion.style.display = 'none';
+                nextQuestion.style.display = currentQuestion < questions.length - 1 ? 'inline-block' : 'none';
+
+                // Show "See Results" if on last question and answered
+                if (currentQuestion === questions.length - 1) {
+                    nextQuestion.textContent = 'See Results →';
+                    nextQuestion.style.display = 'inline-block';
+                }
+            } else {
+                submitButton.style.display = 'inline-block';
+                skipQuestion.style.display = 'inline-block';
+                nextQuestion.style.display = 'none';
+            }
 
             if (question.type === 'multiple-choice') {
                 // Display multiple choice options
@@ -627,29 +786,57 @@
                     const button = document.createElement('div');
                     button.className = 'option';
                     button.textContent = option;
-                    button.addEventListener('click', () => selectOption(button));
+                    if (!isAnswered) {
+                        button.addEventListener('click', () => selectOption(button));
+                    } else {
+                        button.style.cursor = 'default';
+                        // Highlight the user's answer and correct answer
+                        const result = results.find(r => r.questionIndex === currentQuestion);
+                        if (result && option === result.userAnswer) {
+                            button.classList.add('selected');
+                        }
+                    }
                     optionsElement.appendChild(button);
                 });
             } else if (question.type === 'open-ended') {
                 // Create answer section container
                 const answerSection = document.createElement('div');
                 answerSection.className = 'answer-section';
-                
+
                 // Add label for clarity
                 const label = document.createElement('label');
                 label.textContent = 'Your Answer:';
                 label.className = 'answer-label';
-                
+
                 // Create textarea for answer
                 const textArea = document.createElement('textarea');
                 textArea.className = 'open-ended-answer';
                 textArea.placeholder = 'Type your answer here...';
-                
+
+                if (isAnswered) {
+                    const result = results.find(r => r.questionIndex === currentQuestion);
+                    textArea.value = result ? result.userAnswer : '';
+                    textArea.disabled = true;
+                }
+
                 // Append elements
                 answerSection.appendChild(label);
                 answerSection.appendChild(textArea);
                 optionsElement.appendChild(answerSection);
             }
+        }
+
+        function showFeedback(isCorrect, skipped, correctAnswer, explanation) {
+            let feedbackClass = isCorrect ? 'correct' : (skipped ? 'skipped' : 'incorrect');
+            let title = isCorrect ? 'Correct!' : (skipped ? 'Skipped' : 'Incorrect');
+
+            questionFeedback.className = feedbackClass;
+            questionFeedback.innerHTML = `
+                <div class="feedback-title">${title}</div>
+                <p><strong>Correct answer:</strong> ${correctAnswer}</p>
+                ${explanation ? `<p><strong>Explanation:</strong> ${explanation}</p>` : ''}
+            `;
+            questionFeedback.style.display = 'block';
         }
 
         function selectOption(selectedOption) {
@@ -683,29 +870,42 @@
                     return;
                 }
                 userAnswer = textArea.value.trim();
-                isCorrect = question.acceptedAnswers.some(answer => 
+                isCorrect = question.acceptedAnswers.some(answer =>
                     userAnswer.toLowerCase() === answer.toLowerCase()
                 );
                 correctAnswer = question.acceptedAnswers.join(' OR ');
+                textArea.disabled = true;
             }
 
             if (isCorrect) score++;
 
+            // Mark question as answered
+            answeredQuestions.add(currentQuestion);
+
             results.push({
+                questionIndex: currentQuestion,
                 question: question.question,
                 userAnswer: userAnswer,
                 correctAnswer: correctAnswer,
                 isCorrect: isCorrect,
+                skipped: false,
                 explanation: question.explanation || null,
                 type: question.type
             });
 
-            currentQuestion++;
+            // Show feedback immediately
+            showFeedback(isCorrect, false, correctAnswer, question.explanation);
 
-            if (currentQuestion < questions.length) {
-                displayQuestion();
+            // Update button visibility
+            submitButton.style.display = 'none';
+            skipQuestion.style.display = 'none';
+
+            if (currentQuestion < questions.length - 1) {
+                nextQuestion.textContent = 'Next Question →';
+                nextQuestion.style.display = 'inline-block';
             } else {
-                showResults();
+                nextQuestion.textContent = 'See Results →';
+                nextQuestion.style.display = 'inline-block';
             }
         }
 
@@ -715,9 +915,13 @@
                 ? question.options[question.correctAnswer]
                 : question.acceptedAnswers.join(' OR ');
 
+            // Mark question as answered
+            answeredQuestions.add(currentQuestion);
+
             results.push({
+                questionIndex: currentQuestion,
                 question: question.question,
-                userAnswer: "I don't know",
+                userAnswer: "Skipped",
                 correctAnswer: correctAnswer,
                 isCorrect: false,
                 skipped: true,
@@ -725,12 +929,47 @@
                 type: question.type
             });
 
-            currentQuestion++;
+            // Show feedback immediately
+            showFeedback(false, true, correctAnswer, question.explanation);
 
-            if (currentQuestion < questions.length) {
+            // Disable textarea if open-ended
+            const textArea = optionsElement.querySelector('.open-ended-answer');
+            if (textArea) textArea.disabled = true;
+
+            // Update button visibility
+            submitButton.style.display = 'none';
+            skipQuestion.style.display = 'none';
+
+            if (currentQuestion < questions.length - 1) {
+                nextQuestion.textContent = 'Next Question →';
+                nextQuestion.style.display = 'inline-block';
+            } else {
+                nextQuestion.textContent = 'See Results →';
+                nextQuestion.style.display = 'inline-block';
+            }
+        }
+
+        function goToNextQuestion() {
+            // Check if all questions are answered
+            if (answeredQuestions.size === questions.length) {
+                showResults();
+                return;
+            }
+
+            // Move to next question
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
                 displayQuestion();
             } else {
+                // If we're on the last question, show results
                 showResults();
+            }
+        }
+
+        function goToPrevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                displayQuestion();
             }
         }
 
@@ -740,12 +979,15 @@
             const skippedCount = results.filter(r => r.skipped).length;
             scoreElement.textContent = `${score} / ${questions.length}` + (skippedCount > 0 ? ` (${skippedCount} skipped)` : '');
 
-            feedbackElement.innerHTML = results.map((result, index) => {
+            // Sort results by question index for proper display order
+            const sortedResults = [...results].sort((a, b) => a.questionIndex - b.questionIndex);
+
+            feedbackElement.innerHTML = sortedResults.map((result) => {
                 let feedbackClass = result.isCorrect ? 'correct' : (result.skipped ? 'skipped' : 'incorrect');
                 let statusLabel = result.isCorrect ? '' : (result.skipped ? ' (Skipped)' : '');
                 return `
                 <div class="feedback ${feedbackClass}">
-                    <p><strong>Question ${index + 1}${statusLabel}:</strong> ${result.question}</p>
+                    <p><strong>Question ${result.questionIndex + 1}${statusLabel}:</strong> ${result.question}</p>
                     <p>Your answer: ${result.userAnswer}</p>
                     <p>Correct answer: ${result.correctAnswer}</p>
                 </div>
@@ -788,6 +1030,7 @@
             currentQuestion = 0;
             score = 0;
             results = [];
+            answeredQuestions = new Set();
             resultContainer.style.display = 'none';
             questionContainer.style.display = 'block';
             displayQuestion();
@@ -798,6 +1041,7 @@
             currentQuestion = 0;
             score = 0;
             results = [];
+            answeredQuestions = new Set();
             fileInput.value = '';
             startQuiz.disabled = true;
             resultContainer.style.display = 'none';
@@ -821,9 +1065,12 @@
             mdContent += `---\n\n`;
             mdContent += `## Detailed Results\n\n`;
 
-            results.forEach((r, index) => {
+            // Sort results by question index for proper display order
+            const sortedResults = [...results].sort((a, b) => a.questionIndex - b.questionIndex);
+
+            sortedResults.forEach((r) => {
                 const status = r.isCorrect ? '✅ Correct' : (r.skipped ? '🟡 Skipped' : '❌ Incorrect');
-                mdContent += `### Question ${index + 1}: ${status}\n\n`;
+                mdContent += `### Question ${r.questionIndex + 1}: ${status}\n\n`;
                 mdContent += `**Question:** ${r.question}\n\n`;
                 mdContent += `**Your Answer:** ${r.userAnswer}\n\n`;
                 mdContent += `**Correct Answer:** ${r.correctAnswer}\n\n`;
