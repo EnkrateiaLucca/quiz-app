@@ -7,12 +7,14 @@ A modern, user-friendly quiz application that supports multiple-choice and open-
 ## Features
 
 - Multiple choice and open-ended question support
+- Keyboard-first UI (answer, submit, and navigate without the mouse)
 - JSON-based quiz file import
-- Real-time feedback on answers (visual)
-- Score tracking
-- Export results to CSV
-- Export to Anki format for flashcard creation
-- Modern, responsive UI
+- Real-time visual feedback and score tracking
+- Optional per-question `image` / `audio`, `explanation`, and `sourceUrl`
+- **Continue on phone** — hover the 📱 dock to get a QR that opens the current quiz (at the current question) on your phone over your local network
+- Send questions straight to **Anki** (via AnkiConnect, with an `.apkg` fallback)
+- **Local AI grading** of open-ended answers via Ollama — nothing leaves your machine
+- Works two ways: open the HTML directly, or run the local server for the full feature set
 
 ## Getting Started
 
@@ -49,6 +51,50 @@ open quiz-app.html
 xdg-open quiz-app.html
 ```
 
+### Running with the local server (recommended)
+
+Opening the HTML directly works, but the local server unlocks the on-disk quiz
+list, media serving, one-click Anki export, local AI grading, and the
+"continue on phone" QR hand-off. It needs [uv](https://docs.astral.sh/uv/)
+(the only Python dependency, `segno`, is installed automatically):
+
+```bash
+uv run quiz_server.py                 # start the server + open the app
+uv run quiz_server.py my-quiz.json    # start + open with that quiz loaded
+```
+
+The server listens on `http://127.0.0.1:8321` and also binds your local
+network interface so the **Continue on phone** QR works.
+
+#### Continue on phone
+
+While the server is running, hover the 📱 dock in the bottom-right corner. It
+shows a QR encoding your machine's LAN URL for the **current quiz and current
+question** — scan it and your phone resumes exactly where you left off. Both
+devices must be on the same Wi-Fi.
+
+> **Network note:** the server binds all interfaces (`0.0.0.0`) so phones on
+> your LAN can reach it. Sensitive routes (local media read, Anki writes,
+> answer grading, question deletion) are protected two ways: a **Host-header
+> allowlist** (blocks DNS-rebinding from malicious websites) and a **per-run
+> capability token** that non-loopback devices must present — the token is
+> baked into the QR link, so only a device you hand the QR to gets access. Your
+> local browser (loopback) is exempt. Even so, run it on trusted networks only;
+> it is not meant to be exposed to the public internet.
+
+#### Local AI grading (optional)
+
+Open-ended answers are matched against `acceptedAnswers` first. If you have
+[Ollama](https://ollama.com) running, the app can fall back to a local model
+(default `gemma3:12b`) to judge semantically-correct paraphrases — fully
+offline. Pick the model under **Settings → local AI grader**.
+
+#### Send to Anki (optional)
+
+Any question can be pushed to Anki. With Anki open and the AnkiConnect add-on
+installed, cards are added silently; otherwise the app packages an `.apkg` and
+hands it to Anki to import.
+
 ### Usage
 
 1. Prepare your quiz file in JSON format (see example below)
@@ -76,6 +122,10 @@ Your quiz file should be a JSON file with the following structure:
   }
 ]
 ```
+
+**Optional fields** (any question type): `explanation` (shown after answering),
+`sourceUrl` (a "learn more" link), `image` and `audio` (a media path relative to
+the app, an absolute local path, or an `https://` URL). See `example-quiz.json`.
 
 ## Contributing
 

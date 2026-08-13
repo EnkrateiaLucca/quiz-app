@@ -36,4 +36,11 @@ jspm_packages/
 *.tgz
 
 # Yarn Integrity file
-.yarn-integrity 
+.yarn-integrity
+
+# Quiz app: backups the server writes, and user-supplied media
+*.json.bak
+media/images/*
+media/audio/*
+!media/images/.gitkeep
+!media/audio/.gitkeep 

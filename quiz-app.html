@@ -3,1120 +3,1283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz App | Automata Learning Lab</title>
+    <title>Quiz — Automata Learning Lab</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* ═══════════════════════════════════════════════════════════════
-           AUTOMATA LEARNING LAB - Brand Design System
-           ═══════════════════════════════════════════════════════════════ */
-
-        /* CSS Custom Properties - Brand Tokens */
+        /* ─────────────────────────────────────────────
+           QUIZ — quiet, compact, keyboard-first
+           ───────────────────────────────────────────── */
         :root {
-            /* Primary Colors */
-            --ink-black: #000000;
-            --warm-cream: #F5F3EB;
+            --bg: #F5F3EB;
+            --raised: #FCFBF7;
+            --ink: #1A1813;
+            --ink-60: rgba(26, 24, 19, 0.60);
+            --ink-40: rgba(26, 24, 19, 0.40);
+            --line: rgba(26, 24, 19, 0.14);
+            --line-soft: rgba(26, 24, 19, 0.07);
 
-            /* Accent Colors */
-            --coral: #E86B5A;
-            --golden: #F5C542;
-            --sage: #7CB56B;
-            --sky: #5B9BD5;
+            --red: #C9503F;
+            --green: #4F8A41;
+            --amber: #B8860B;
+            --blue: #3D7AB5;
+            --red-bg: #F6E9E6;
+            --green-bg: #E9F0E4;
+            --amber-bg: #F6EFD9;
+            --blue-bg: #E7EEF5;
 
-            /* Accent Tints (Backgrounds) */
-            --coral-light: #FBEAE7;
-            --golden-light: #FEF8E6;
-            --sage-light: #EEF5EC;
-            --sky-light: #E8F1F9;
-
-            /* Neutral Grays */
-            --gray-100: #F5F4F1;
-            --gray-300: #DDD9D2;
-            --gray-500: #8A847A;
-            --gray-600: #5C5750;
-            --gray-800: #2A2825;
-
-            /* Spacing Scale */
-            --space-xs: 4px;
-            --space-sm: 8px;
-            --space-md: 16px;
-            --space-lg: 24px;
-            --space-xl: 40px;
-
-            /* Typography */
-            --font-primary: 'IBM Plex Sans', Arial, sans-serif;
-            --font-mono: 'JetBrains Mono', 'Monaco', 'Courier New', monospace;
+            --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', 'SF Mono', monospace;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        [hidden] { display: none !important; }
 
         body {
-            font-family: var(--font-primary);
-            line-height: 1.6;
-            color: var(--gray-800);
+            font-family: var(--sans);
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--ink);
+            background: var(--bg);
             min-height: 100vh;
-            background-color: var(--warm-cream);
-            padding: var(--space-xl) var(--space-lg);
         }
 
-        .container {
-            background-color: #ffffff;
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            padding: var(--space-xl);
-            max-width: 900px;
+        .progress-track {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--line-soft);
+            z-index: 10;
+        }
+        #progressFill {
+            height: 100%;
+            width: 0%;
+            background: var(--ink);
+            transition: width 0.35s ease;
+        }
+
+        .shell {
+            max-width: 620px;
             margin: 0 auto;
+            padding: 36px 24px 60px;
         }
 
-        h1 {
-            color: var(--ink-black);
-            text-align: center;
-            margin-bottom: var(--space-sm);
-            font-size: 2.5em;
-            font-weight: 700;
-            line-height: 1.2;
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            margin-bottom: 36px;
         }
-
-        h2 {
-            color: var(--ink-black);
-            font-size: 1.5em;
-            font-weight: 700;
-            line-height: 1.3;
-            margin-bottom: var(--space-md);
-        }
-
-        .subtitle {
-            text-align: center;
-            color: var(--gray-600);
-            margin-bottom: var(--space-xl);
-            font-size: 1.1em;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .upload-section {
-            background-color: var(--gray-100);
-            border: 2px dashed var(--ink-black);
-            border-radius: 0;
-            padding: var(--space-xl);
-            text-align: center;
-            margin-bottom: var(--space-xl);
-            transition: all 0.2s ease;
-        }
-
-        .upload-section:hover {
-            background-color: var(--sky-light);
-            border-color: var(--sky);
-        }
-
-        /* Button Base Styles */
-        .btn {
-            display: inline-block;
-            padding: 14px 28px;
-            font-family: var(--font-mono);
-            font-size: 0.9em;
-            font-weight: 500;
+        .meta {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            color: var(--ink-40);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .meta .ok { color: var(--green); }
+        .meta .bad { color: var(--red); }
+
+        /* ── continue on phone (hover QR) ─────────── */
+        #phoneDock {
+            position: fixed; right: 18px; bottom: 16px; z-index: 40;
+            font-family: var(--mono);
+        }
+        #phoneDock[hidden] { display: none; }
+        #phoneToggle {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-40);
+            background: var(--raised); border: 1px solid var(--line);
+            border-radius: 999px; padding: 6px 11px; cursor: pointer;
+            transition: color .15s, border-color .15s;
+        }
+        #phoneToggle:hover, #phoneDock:focus-within #phoneToggle {
+            color: var(--ink); border-color: var(--ink-40);
+        }
+        #phonePop {
+            position: absolute; right: 0; bottom: calc(100% + 8px); width: 208px;
+            background: var(--raised); border: 1px solid var(--line);
+            border-radius: 12px; padding: 14px;
+            box-shadow: 0 8px 30px rgba(26, 24, 19, 0.13);
+            opacity: 0; visibility: hidden; transform: translateY(4px);
+            transition: opacity .16s, transform .16s, visibility .16s;
+        }
+        #phoneDock:hover #phonePop, #phoneDock:focus-within #phonePop {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        #phonePop .qr {
+            width: 180px; height: 180px; display: flex; align-items: center;
+            justify-content: center; border-radius: 6px; overflow: hidden;
+        }
+        #phonePop .qr svg { width: 100%; height: 100%; display: block; }
+        #phonePop .cap {
+            font-family: var(--sans); font-size: 11.5px; color: var(--ink-60);
+            margin-top: 10px; line-height: 1.4;
+        }
+        #phonePop .url {
+            font-family: var(--mono); font-size: 9.5px; color: var(--ink-40);
+            margin-top: 6px; word-break: break-all;
         }
 
-        .btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 4px 4px 0 var(--ink-black);
-        }
-
-        .btn:active {
-            transform: translateY(-2px);
-            box-shadow: 2px 2px 0 var(--ink-black);
-        }
-
-        /* Primary Button - Black fill */
-        .btn-primary {
-            background-color: var(--ink-black);
-            color: #ffffff;
-        }
-
-        /* Secondary Button - White fill with border */
-        .btn-secondary {
-            background-color: #ffffff;
-            color: var(--ink-black);
-        }
-
-        /* Accent Button - Coral for CTAs */
-        .btn-accent {
-            background-color: var(--coral);
-            color: #ffffff;
-            border-color: var(--ink-black);
-        }
-
-        /* Info Button - Sky Blue */
-        .btn-info {
-            background-color: var(--sky);
-            color: #ffffff;
-            border-color: var(--ink-black);
-        }
-
-        /* Success Button - Sage Green */
-        .btn-success {
-            background-color: var(--sage);
-            color: #ffffff;
-            border-color: var(--ink-black);
-        }
-
-        /* Warning Button - Golden */
-        .btn-warning {
-            background-color: var(--golden);
-            color: var(--ink-black);
-            border-color: var(--ink-black);
-        }
-
-        .btn:disabled {
-            background-color: var(--gray-300);
-            color: var(--gray-500);
-            border-color: var(--gray-500);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .file-upload {
-            display: inline-block;
-            padding: 14px 28px;
-            background-color: var(--ink-black);
-            color: #ffffff;
-            font-family: var(--font-mono);
-            font-size: 0.9em;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .file-upload:hover {
-            transform: translateY(-4px);
-            box-shadow: 4px 4px 0 var(--gray-600);
-        }
-
-        button {
-            padding: 14px 28px;
-            font-family: var(--font-mono);
-            font-size: 0.9em;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            background-color: var(--sage);
-            color: #ffffff;
-            margin-left: var(--space-md);
-        }
-
-        button:hover {
-            transform: translateY(-4px);
-            box-shadow: 4px 4px 0 var(--ink-black);
-        }
-
-        button:active {
-            transform: translateY(-2px);
-            box-shadow: 2px 2px 0 var(--ink-black);
-        }
-
-        button:disabled {
-            background-color: var(--gray-300);
-            color: var(--gray-500);
-            border-color: var(--gray-500);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        #questionContainer, #resultContainer {
-            margin-top: var(--space-lg);
-        }
-
-        .options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--space-md);
-            margin-top: var(--space-lg);
-        }
-
-        .option {
-            padding: var(--space-md);
-            background-color: #ffffff;
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: var(--font-primary);
-        }
-
-        .option:hover {
-            background-color: var(--sky-light);
-            transform: translateY(-2px);
-            box-shadow: 2px 2px 0 var(--ink-black);
-        }
-
-        .option.selected {
-            background-color: var(--sky);
-            border-color: var(--ink-black);
-            color: #ffffff;
-            box-shadow: 4px 4px 0 var(--ink-black);
-        }
-
-        /* Feedback Callouts - Using Brand Accent Colors */
-        .feedback {
-            margin-top: var(--space-md);
-            padding: var(--space-md);
-            border-radius: 0;
-            border-left: 4px solid;
-        }
-
-        .correct {
-            background-color: var(--sage-light);
-            border-color: var(--sage);
-            color: var(--gray-800);
-        }
-
-        .correct strong {
-            color: var(--sage);
-        }
-
-        .incorrect {
-            background-color: var(--coral-light);
-            border-color: var(--coral);
-            color: var(--gray-800);
-        }
-
-        .incorrect strong {
-            color: var(--coral);
-        }
-
-        .skipped {
-            background-color: var(--golden-light);
-            border-color: var(--golden);
-            color: var(--gray-800);
-        }
-
-        .skipped strong {
-            color: #9a7b0a;
-        }
-
-        .skip-btn {
-            padding: 14px 24px;
-            background-color: var(--golden);
-            color: var(--ink-black);
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            font-family: var(--font-mono);
-            font-size: 0.9em;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-left: var(--space-sm);
-        }
-
-        .skip-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 4px 4px 0 var(--ink-black);
-        }
-
-        .skip-btn:active {
-            transform: translateY(-2px);
-            box-shadow: 2px 2px 0 var(--ink-black);
-        }
-
-        .answer-section {
-            margin-top: var(--space-lg);
-            width: 100%;
-        }
-
-        .answer-label {
-            display: block;
-            margin-bottom: var(--space-sm);
+        /* ── start ──────────────────────────────── */
+        #startScreen h1 {
+            font-size: 24px;
             font-weight: 600;
-            color: var(--gray-800);
-            font-family: var(--font-mono);
+            letter-spacing: -0.01em;
+            margin-bottom: 6px;
+        }
+        .lede { color: var(--ink-60); font-size: 14px; margin-bottom: 36px; max-width: 46ch; }
+
+        .section-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.85em;
+            color: var(--ink-40);
+            margin: 28px 0 8px;
         }
 
-        .open-ended-answer {
-            width: 100%;
-            min-height: 120px;
-            padding: var(--space-md);
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            font-family: var(--font-primary);
-            font-size: 1em;
-            resize: vertical;
-            background-color: #ffffff;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .open-ended-answer:focus {
-            border-color: var(--sky);
-            outline: none;
-            box-shadow: 4px 4px 0 var(--sky-light);
-        }
-
-        .example-box {
-            background-color: #ffffff;
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            margin-top: var(--space-lg);
-        }
-
-        .example-box summary {
-            color: var(--ink-black);
-            font-weight: 700;
-            padding: var(--space-md) var(--space-lg);
-            font-size: 1.1em;
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            list-style: none;
+        .quiz-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: background-color 0.2s ease;
+            gap: 12px;
+            width: 100%;
+            text-align: left;
+            padding: 12px 14px;
+            margin-bottom: 6px;
+            background: var(--raised);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-family: var(--sans);
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--ink);
+            cursor: pointer;
+            transition: border-color 0.12s ease, background 0.12s ease;
         }
+        .quiz-row:hover { border-color: var(--ink); }
+        .quiz-row .arrow { font-family: var(--mono); font-size: 10.5px; color: var(--ink-40); }
+        .quiz-row:hover .arrow { color: var(--ink); }
 
-        .example-box summary::-webkit-details-marker {
-            display: none;
-        }
+        .upload-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        #fileInput { display: none; }
+        .file-name { font-family: var(--mono); font-size: 11px; color: var(--ink-60); }
 
-        .example-box summary::after {
-            content: '+';
-            font-size: 1.5em;
-            font-weight: 700;
-            transition: transform 0.2s ease;
-        }
-
-        .example-box[open] summary::after {
-            content: '−';
-        }
-
-        .example-box summary:hover {
-            background-color: var(--gray-100);
-        }
-
-        .example-box .example-content {
-            padding: var(--space-lg);
-            border-top: 2px solid var(--gray-300);
-        }
-
-        .example-title {
-            color: var(--ink-black);
-            font-weight: 700;
-            margin-bottom: var(--space-md);
-            font-size: 1.1em;
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: flex;
+        /* ── buttons ────────────────────────────── */
+        .btn {
+            display: inline-flex;
             align-items: center;
-            gap: var(--space-sm);
-            padding-bottom: var(--space-sm);
-            border-bottom: 2px solid var(--gray-300);
+            gap: 8px;
+            font-family: var(--sans);
+            font-size: 13.5px;
+            font-weight: 500;
+            padding: 9px 16px;
+            border: 1px solid var(--ink);
+            border-radius: 6px;
+            background: var(--ink);
+            color: var(--bg);
+            cursor: pointer;
+            transition: opacity 0.12s ease;
+        }
+        .btn:hover:not(:disabled) { opacity: 0.85; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+        .btn.ghost:hover:not(:disabled) { border-color: var(--ink); opacity: 1; }
+        .btn kbd {
+            font-family: var(--mono);
+            font-size: 9px;
+            padding: 1px 4px;
+            border: 1px solid currentColor;
+            border-radius: 3px;
+            opacity: 0.5;
         }
 
-        .json-example {
-            background-color: var(--gray-800);
-            color: var(--warm-cream);
-            padding: var(--space-lg);
-            border: 2px solid var(--ink-black);
-            border-radius: 0;
-            font-family: var(--font-mono);
-            font-size: 0.85em;
+        .quiet {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: none;
+            border: none;
+            padding: 2px 0;
+            color: var(--ink-60);
+            cursor: pointer;
+            border-bottom: 1px solid transparent;
+            transition: color 0.12s ease;
+        }
+        .quiet:hover:not(:disabled) { color: var(--ink); }
+        .quiet:disabled { opacity: 0.4; cursor: default; }
+        .quiet.danger:hover:not(:disabled) { color: var(--red); }
+        .quiet.armed { color: var(--red); font-weight: 500; }
+
+        /* ── panels ─────────────────────────────── */
+        details.panel { border-top: 1px solid var(--line-soft); margin-top: 8px; }
+        details.panel summary {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--ink-40);
+            padding: 12px 0;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+        }
+        details.panel summary:hover { color: var(--ink); }
+        details.panel summary::-webkit-details-marker { display: none; }
+        details.panel summary::after { content: '+'; }
+        details.panel[open] summary::after { content: '−'; }
+        details.panel .panel-body { padding: 2px 0 20px; }
+        .settings-note { font-size: 13px; color: var(--ink-60); max-width: 54ch; margin-bottom: 12px; }
+
+        select.model-select {
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 8px 12px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--raised);
+            color: var(--ink);
+            min-width: 230px;
+            cursor: pointer;
+        }
+        select.model-select:focus { outline: none; border-color: var(--ink); }
+
+        .code-doc {
+            background: #232019;
+            color: #DDD8CC;
+            font-family: var(--mono);
+            font-size: 11px;
+            line-height: 1.7;
+            padding: 16px 18px;
+            border-radius: 6px;
             overflow-x: auto;
             white-space: pre;
-            line-height: 1.8;
         }
+        .code-doc .k { color: #8CB8E0; }
+        .code-doc .s { color: #A8C89A; }
+        .code-doc .n { color: #E0A292; }
 
-        .json-key {
-            color: var(--sky);
-            font-weight: 500;
-        }
-
-        .json-string {
-            color: var(--sage);
-        }
-
-        .json-number {
-            color: var(--coral);
-            font-weight: 500;
-        }
-
-        /* Results Page Button Variations */
-        #retakeSameQuiz {
-            background-color: var(--sky);
-        }
-
-        #loadNewQuiz {
-            background-color: var(--coral);
-        }
-
-        #downloadCSV {
-            background-color: var(--ink-black);
-        }
-
-        #downloadMD {
-            background-color: var(--sage);
-        }
-
-        #exportToAnki {
-            background-color: var(--golden);
-            color: var(--ink-black);
-        }
-
-        /* Score Display - Hierarchical Design */
-        .score-display {
-            text-align: center;
-            margin-bottom: var(--space-xl);
-            padding: var(--space-xl);
-            background-color: var(--gray-100);
-            border: 2px solid var(--ink-black);
-        }
-
-        .score-display .score-label {
-            font-family: var(--font-mono);
+        /* ── quiz ───────────────────────────────── */
+        .q-counter {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.85em;
-            color: var(--gray-600);
-            margin-bottom: var(--space-sm);
+            color: var(--ink-40);
+            margin-bottom: 10px;
+        }
+        #questionText {
+            font-size: 19px;
+            font-weight: 600;
+            line-height: 1.35;
+            letter-spacing: -0.005em;
+            margin-bottom: 18px;
         }
 
-        #score {
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 3em;
-            color: var(--ink-black);
+        .question-media { margin: 0 0 18px; }
+        .question-media img {
             display: block;
+            max-width: 100%;
+            max-height: 240px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--raised);
         }
+        .question-media audio { display: block; width: 100%; max-width: 400px; margin-top: 10px; }
 
-        .score-subtext {
-            font-size: 0.9em;
-            color: var(--gray-500);
-            margin-top: var(--space-xs);
-        }
-
-        /* Results Sections */
-        .results-section {
-            margin-bottom: var(--space-xl);
-        }
-
-        .results-section-title {
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.8em;
-            color: var(--gray-500);
-            margin-bottom: var(--space-md);
-            padding-bottom: var(--space-sm);
-            border-bottom: 1px solid var(--gray-300);
-        }
-
-        /* Enhanced Feedback Cards with Status Badges */
-        .feedback .status-badge {
-            display: inline-block;
-            font-family: var(--font-mono);
-            font-size: 0.75em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 4px 8px;
-            margin-left: var(--space-sm);
-            border: 1px solid;
-        }
-
-        .feedback.correct .status-badge {
-            background-color: var(--sage);
-            color: white;
-            border-color: var(--sage);
-        }
-
-        .feedback.incorrect .status-badge {
-            background-color: var(--coral);
-            color: white;
-            border-color: var(--coral);
-        }
-
-        .feedback.skipped .status-badge {
-            background-color: var(--golden);
-            color: var(--ink-black);
-            border-color: var(--golden);
-        }
-
-        /* Button Groups */
-        .button-group-primary {
+        .option {
             display: flex;
-            gap: var(--space-md);
-            margin-bottom: var(--space-lg);
-        }
-
-        .button-group-secondary {
-            display: flex;
-            gap: var(--space-sm);
-            flex-wrap: wrap;
-        }
-
-        .button-group-secondary button {
-            padding: 10px 16px;
-            font-size: 0.8em;
-        }
-
-        .button-group-label {
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.7em;
-            color: var(--gray-500);
-            margin-bottom: var(--space-sm);
-            display: block;
-        }
-
-        /* Question Progress */
-        .question-progress {
-            font-family: var(--font-mono);
-            font-size: 0.85em;
-            color: var(--gray-600);
-            margin-bottom: var(--space-md);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Button Row */
-        .button-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--space-sm);
             align-items: center;
+            gap: 12px;
+            width: 100%;
+            text-align: left;
+            font-family: var(--sans);
+            font-size: 14.5px;
+            color: var(--ink);
+            background: var(--raised);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: border-color 0.1s ease, background 0.1s ease;
+        }
+        .option .key {
+            flex-shrink: 0;
+            width: 18px; height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 9.5px;
+            color: var(--ink-40);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+        }
+        .option .mark { margin-left: auto; font-family: var(--mono); font-size: 12px; opacity: 0; }
+        .option:hover:not(:disabled) { border-color: var(--ink); }
+        .option.selected { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+        .option.selected .key { border-color: rgba(245,243,235,0.4); color: var(--bg); }
+        .option:disabled { cursor: default; }
+        .option.dim { opacity: 0.45; }
+        .option.right { background: var(--green-bg); border-color: var(--green); }
+        .option.right .key { border-color: var(--green); color: var(--green); }
+        .option.right .mark { opacity: 1; color: var(--green); }
+        .option.wrong { background: var(--red-bg); border-color: var(--red); }
+        .option.wrong .key { border-color: var(--red); color: var(--red); }
+        .option.wrong .mark { opacity: 1; color: var(--red); }
+
+        #openAnswer {
+            width: 100%;
+            min-height: 76px;
+            padding: 12px 14px;
+            font-family: var(--sans);
+            font-size: 14.5px;
+            line-height: 1.5;
+            color: var(--ink);
+            background: var(--raised);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            resize: vertical;
+            transition: border-color 0.12s ease;
+        }
+        #openAnswer:focus { outline: none; border-color: var(--ink); }
+        #openAnswer:disabled { color: var(--ink-60); background: transparent; }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            scroll-margin-bottom: 20px;
+        }
+        .controls .spacer { flex: 1; }
+        #controlHint {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--ink-40);
         }
 
-        /* Question Feedback */
-        #questionFeedback {
-            margin-top: var(--space-lg);
-            padding: var(--space-md);
-            border-radius: 0;
-            border-left: 4px solid;
+        /* ── feedback: one compact strip ────────── */
+        #feedbackPanel {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+            border-left-width: 3px;
+            background: var(--raised);
+            animation: fade 0.2s ease both;
+        }
+        #feedbackPanel.f-correct { border-left-color: var(--green); }
+        #feedbackPanel.f-incorrect { border-left-color: var(--red); }
+        #feedbackPanel.f-skipped { border-left-color: var(--amber); }
+
+        .fb-head {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .fb-verdict { font-weight: 600; font-size: 14px; }
+        .f-correct .fb-verdict { color: var(--green); }
+        .f-incorrect .fb-verdict { color: var(--red); }
+        .f-skipped .fb-verdict { color: var(--amber); }
+        .fb-answer { font-size: 14px; }
+        .fb-answer .lbl { color: var(--ink-40); margin-right: 6px; font-size: 12.5px; }
+        .fb-actions { margin-left: auto; display: flex; gap: 16px; }
+        .fb-sub { font-size: 13px; color: var(--ink-60); margin-top: 6px; max-width: 62ch; }
+        .fb-sub a { color: var(--blue); text-decoration: none; }
+        .fb-sub a:hover { text-decoration: underline; }
+        .action-status {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--ink-60);
+            margin-top: 6px;
+        }
+        .action-status:empty { display: none; }
+
+        .ai-box {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-left: 2px solid var(--blue);
+            background: var(--blue-bg);
+            border-radius: 0 6px 6px 0;
+            animation: fade 0.2s ease both;
+        }
+        .ai-box .ai-meta {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--blue);
+            margin-bottom: 3px;
+        }
+        .ai-box p { font-size: 13px; }
+        .ai-box .quiet { margin-top: 6px; }
+        .ai-box .quiet.approve:hover { color: var(--green); }
+
+        /* ── results ────────────────────────────── */
+        .score-hero {
+            font-size: 56px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .score-hero sup { font-size: 0.4em; color: var(--ink-40); }
+        .score-sub {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink-60);
+            margin-bottom: 30px;
+        }
+        .score-sub .s-ok { color: var(--green); }
+        .score-sub .s-bad { color: var(--red); }
+        .score-sub .s-skip { color: var(--amber); }
+
+        .select-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+        }
+        .select-row label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ink-60);
+            cursor: pointer;
+        }
+        input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--ink); cursor: pointer; }
+
+        .r-row {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-top: 1px solid var(--line-soft);
+        }
+        .r-row input[type="checkbox"] { margin-top: 4px; flex-shrink: 0; }
+        .r-status { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; margin-top: 7px; }
+        .r-status.ok { background: var(--green); }
+        .r-status.bad { background: var(--red); }
+        .r-status.skip { background: var(--amber); }
+        .r-q { font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 2px; }
+        .r-detail { font-size: 12.5px; color: var(--ink-60); }
+        .r-detail b { color: var(--ink); font-weight: 500; }
+        .r-detail a { color: var(--blue); text-decoration: none; }
+
+        .results-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--line);
+            flex-wrap: wrap;
+        }
+        .export-group { display: flex; gap: 16px; margin-left: auto; align-items: center; }
+
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fade 0.18s ease both; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
         }
 
-        #questionFeedback.correct {
-            background-color: var(--sage-light);
-            border-color: var(--sage);
-        }
-
-        #questionFeedback.incorrect {
-            background-color: var(--coral-light);
-            border-color: var(--coral);
-        }
-
-        #questionFeedback.skipped {
-            background-color: var(--golden-light);
-            border-color: var(--golden);
-        }
-
-        #questionFeedback .feedback-title {
-            font-weight: 700;
-            margin-bottom: var(--space-sm);
-        }
-
-        #questionFeedback.correct .feedback-title {
-            color: var(--sage);
-        }
-
-        #questionFeedback.incorrect .feedback-title {
-            color: var(--coral);
-        }
-
-        #questionFeedback.skipped .feedback-title {
-            color: #9a7b0a;
-        }
-
-        /* Source URL Link Styling */
-        .source-link {
-            color: var(--sky);
-            text-decoration: none;
-            font-weight: 500;
-            border-bottom: 1px solid transparent;
-            transition: border-color 0.2s ease;
-        }
-
-        .source-link:hover {
-            border-bottom-color: var(--sky);
-        }
-
-        .source-link::after {
-            content: ' ↗';
-            font-size: 0.85em;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: var(--space-lg) var(--space-md);
-            }
-
-            .container {
-                padding: var(--space-lg);
-            }
-
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .upload-section {
-                padding: var(--space-lg);
-            }
-
-            .file-upload, button {
-                display: block;
-                width: 100%;
-                margin: var(--space-sm) 0;
-            }
-
-            button {
-                margin-left: 0;
-            }
-
-            .options {
-                grid-template-columns: 1fr;
-            }
-
-            .json-example {
-                font-size: 0.75em;
-                padding: var(--space-md);
-            }
-
-            .skip-btn {
-                display: block;
-                width: 100%;
-                margin: var(--space-sm) 0;
-                margin-left: 0;
-            }
-
-            .button-row {
-                flex-direction: column;
-            }
-
-            .button-row button {
-                width: 100%;
-                margin: var(--space-xs) 0;
-            }
-
-            #prevQuestion {
-                order: 3;
-            }
-
-            .button-group-primary {
-                flex-direction: column;
-            }
-
-            .button-group-primary button {
-                width: 100%;
-                margin-left: 0;
-            }
-
-            .button-group-secondary button {
-                flex: 1;
-                min-width: 80px;
-            }
-
-            #score {
-                font-size: 2.2em;
-            }
+        @media (max-width: 640px) {
+            .shell { padding: 28px 16px 48px; }
+            #controlHint { display: none; }
+            .export-group { margin-left: 0; }
+            .fb-actions { margin-left: 0; width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="initialPage">
-            <h1>Quiz App</h1>
-            <p class="subtitle">Test your knowledge with custom JSON-based quizzes</p>
+    <div id="phoneDock" hidden>
+        <div id="phonePop">
+            <div class="qr" id="phoneQr"></div>
+            <div class="cap" id="phoneCap">Scan to continue on your phone.</div>
+            <div class="url" id="phoneUrl"></div>
+        </div>
+        <button id="phoneToggle" aria-label="Continue on phone">📱 <span>Phone</span></button>
+    </div>
 
-            <div class="upload-section">
-                <label for="fileInput" class="file-upload">
-                    Choose Quiz File
-                </label>
-                <input type="file" id="fileInput" accept=".json,.txt">
-                <button id="startQuiz" disabled>Start Quiz</button>
+    <div class="progress-track"><div id="progressFill"></div></div>
+
+    <div class="shell">
+        <header>
+            <span class="meta" id="headerLeft">Quizzes</span>
+            <span class="meta" id="headerRight"></span>
+        </header>
+
+        <!-- ══ START ══ -->
+        <section id="startScreen">
+            <h1>Quizzes</h1>
+            <p class="lede">Answer from the keyboard. Send what matters to Anki. Open-ended answers graded locally by Ollama.</p>
+
+            <div id="serverQuizzes" style="display: none;">
+                <p class="section-label">On disk</p>
+                <div id="quizListButtons"></div>
             </div>
 
-            <details class="example-box">
-                <summary>Expected JSON File Format</summary>
-                <div class="example-content">
-                    <div class="json-example">[
+            <p class="section-label">Load a file</p>
+            <div class="upload-row">
+                <label for="fileInput" class="btn ghost">Choose JSON</label>
+                <input type="file" id="fileInput" accept=".json,.txt">
+                <button class="btn" id="startQuiz" disabled>Begin <kbd>↵</kbd></button>
+                <span class="file-name" id="fileName"></span>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <details class="panel" id="settingsPanel">
+                    <summary>Settings · local AI grader</summary>
+                    <div class="panel-body">
+                        <p class="settings-note">
+                            Open-ended answers can be graded by a local Ollama model —
+                            nothing leaves this machine.
+                        </p>
+                        <select class="model-select" id="modelSelect"></select>
+                        <div class="action-status" id="modelStatus"></div>
+                    </div>
+                </details>
+                <details class="panel">
+                    <summary>Quiz JSON format</summary>
+                    <div class="panel-body">
+<div class="code-doc">[
   {
-    <span class="json-key">"question"</span>: <span class="json-string">"What is the capital of France?"</span>,
-    <span class="json-key">"type"</span>: <span class="json-string">"multiple-choice"</span>,
-    <span class="json-key">"options"</span>: [<span class="json-string">"London"</span>, <span class="json-string">"Berlin"</span>, <span class="json-string">"Paris"</span>, <span class="json-string">"Madrid"</span>],
-    <span class="json-key">"correctAnswer"</span>: <span class="json-number">2</span>,
-    <span class="json-key">"explanation"</span>: <span class="json-string">"Paris has been the capital since 987 AD."</span>,
-    <span class="json-key">"sourceUrl"</span>: <span class="json-string">"https://en.wikipedia.org/wiki/Paris"</span>
+    <span class="k">"question"</span>: <span class="s">"What is the capital of France?"</span>,
+    <span class="k">"type"</span>: <span class="s">"multiple-choice"</span>,
+    <span class="k">"options"</span>: [<span class="s">"London"</span>, <span class="s">"Berlin"</span>, <span class="s">"Paris"</span>, <span class="s">"Madrid"</span>],
+    <span class="k">"correctAnswer"</span>: <span class="n">2</span>,
+    <span class="k">"explanation"</span>: <span class="s">"Paris has been the capital since 987 AD."</span>,
+    <span class="k">"sourceUrl"</span>: <span class="s">"https://en.wikipedia.org/wiki/Paris"</span>,
+    <span class="k">"image"</span>: <span class="s">"media/images/paris.png"</span>
   },
   {
-    <span class="json-key">"question"</span>: <span class="json-string">"What is 2 + 2?"</span>,
-    <span class="json-key">"type"</span>: <span class="json-string">"open-ended"</span>,
-    <span class="json-key">"acceptedAnswers"</span>: [<span class="json-string">"4"</span>, <span class="json-string">"four"</span>],
-    <span class="json-key">"explanation"</span>: <span class="json-string">"Basic addition: 2+2=4"</span>
+    <span class="k">"question"</span>: <span class="s">"What is 2 + 2?"</span>,
+    <span class="k">"type"</span>: <span class="s">"open-ended"</span>,
+    <span class="k">"acceptedAnswers"</span>: [<span class="s">"4"</span>, <span class="s">"four"</span>],
+    <span class="k">"audio"</span>: <span class="s">"media/audio/question.mp3"</span>
   }
 ]</div>
-                </div>
-            </details>
-        </div>
-
-        <div id="questionContainer" style="display: none;">
-            <div class="question-progress">
-                <span id="questionProgress"></span>
+                        <p class="settings-note" style="margin-top: 12px;">
+                            <code>image</code> / <code>audio</code> are optional on any question —
+                            relative to the quiz-app folder, absolute paths, or URLs.
+                        </p>
+                    </div>
+                </details>
             </div>
-            <h2 id="question"></h2>
-            <div class="options" id="options"></div>
-            <div id="questionFeedback" style="display: none;"></div>
-            <div class="button-row" style="margin-top: 20px;">
-                <button id="prevQuestion" class="btn-secondary">← Previous</button>
-                <button id="submit">Submit</button>
-                <button id="skipQuestion" class="skip-btn">Skip →</button>
-                <button id="nextQuestion" class="btn-info" style="display: none;">Next Question →</button>
-            </div>
-        </div>
-        <div id="resultContainer" style="display: none;">
-            <h2>Quiz Results</h2>
+        </section>
 
-            <div class="score-display">
-                <div class="score-label">Your Score</div>
-                <span id="score"></span>
-                <div id="scoreSubtext" class="score-subtext"></div>
-            </div>
-
-            <div class="results-section">
-                <div class="results-section-title">Question Breakdown</div>
-                <div id="feedback"></div>
-            </div>
-
-            <div class="results-section">
-                <div class="results-section-title">Actions</div>
-                <div class="button-group-primary">
-                    <button id="retakeSameQuiz">Retake Quiz</button>
-                    <button id="loadNewQuiz">New Quiz</button>
-                </div>
-                <span class="button-group-label">Export Results</span>
-                <div class="button-group-secondary">
-                    <button id="downloadCSV">CSV</button>
-                    <button id="downloadMD">LLM Review</button>
-                    <button id="exportToAnki">Anki Cards</button>
+        <!-- ══ QUIZ ══ -->
+        <section id="quizScreen" hidden>
+            <div id="questionCard">
+                <div class="q-counter" id="qCounter"></div>
+                <h2 id="questionText"></h2>
+                <div id="questionMedia"></div>
+                <div id="answerArea"></div>
+                <div id="feedbackPanel" hidden></div>
+                <div class="controls" id="controls">
+                    <button class="btn ghost" id="prevBtn">←</button>
+                    <button class="btn" id="submitBtn">Submit <kbd>↵</kbd></button>
+                    <button class="btn ghost" id="skipBtn">Skip <kbd>S</kbd></button>
+                    <div class="spacer"></div>
+                    <span id="controlHint"></span>
+                    <button class="btn" id="nextBtn" hidden>Next <kbd>↵</kbd></button>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- ══ RESULTS ══ -->
+        <section id="resultsScreen" hidden>
+            <div id="resultsInner">
+                <div class="score-hero"><span id="scorePct">0</span><sup>%</sup></div>
+                <div class="score-sub" id="scoreSub"></div>
+
+                <div class="select-row">
+                    <label><input type="checkbox" id="selectAllQuestions" checked onchange="toggleSelectAll(this)"> Select all</label>
+                    <span class="meta" id="selectionCount"></span>
+                </div>
+                <div id="breakdown"></div>
+
+                <div class="results-actions">
+                    <button class="btn" id="retakeBtn">Retake</button>
+                    <button class="btn ghost" id="newQuizBtn">New quiz</button>
+                    <div class="export-group">
+                        <button class="quiet" id="bulkAnkiBtn">→ Anki</button>
+                        <button class="quiet" id="csvBtn">CSV</button>
+                        <button class="quiet" id="mdBtn">LLM review</button>
+                    </div>
+                </div>
+                <div class="action-status" id="resultsStatus"></div>
+            </div>
+        </section>
+    </div>
 
     <script>
+        // ════════════════ state
         let questions = [];
         let currentQuestion = 0;
         let score = 0;
         let results = [];
-        let answeredQuestions = new Set(); // Track which questions have been answered
+        let answeredQuestions = new Set();
+        let sourceFile = null;
+        let pendingResume = null;   // question index to jump to (phone hand-off)
 
-        const fileInput = document.getElementById('fileInput');
-        const startQuiz = document.getElementById('startQuiz');
-        const initialPage = document.getElementById('initialPage');
-        const questionContainer = document.getElementById('questionContainer');
-        const questionElement = document.getElementById('question');
-        const optionsElement = document.getElementById('options');
-        const submitButton = document.getElementById('submit');
-        const resultContainer = document.getElementById('resultContainer');
-        const scoreElement = document.getElementById('score');
-        const feedbackElement = document.getElementById('feedback');
-        const downloadCSV = document.getElementById('downloadCSV');
+        const serverMode = window.location.protocol !== 'file:';
 
-        const retakeSameQuiz = document.getElementById('retakeSameQuiz');
-        const loadNewQuiz = document.getElementById('loadNewQuiz');
-        const downloadMD = document.getElementById('downloadMD');
-        const skipQuestion = document.getElementById('skipQuestion');
-        const nextQuestion = document.getElementById('nextQuestion');
-        const prevQuestion = document.getElementById('prevQuestion');
-        const questionFeedback = document.getElementById('questionFeedback');
-        const questionProgress = document.getElementById('questionProgress');
+        // Capability token for phone hand-off: the QR URL carries ?token=… so this
+        // device can reach the guarded routes (media read, Anki, grading, delete).
+        // The local browser (loopback) is exempt server-side and simply has none.
+        const API_TOKEN = new URLSearchParams(window.location.search).get('token');
+        function guarded(url) {
+            if (!API_TOKEN) return url;
+            return url + (url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(API_TOKEN);
+        }
+        const MODEL_STORAGE = 'quiz-ai-model';
 
-        fileInput.addEventListener('change', handleFileUpload);
-        startQuiz.addEventListener('click', startQuizHandler);
-        submitButton.addEventListener('click', submitAnswer);
-        downloadCSV.addEventListener('click', downloadResults);
-        retakeSameQuiz.addEventListener('click', retakeSameQuizHandler);
-        loadNewQuiz.addEventListener('click', loadNewQuizHandler);
-        downloadMD.addEventListener('click', downloadMarkdownResults);
-        skipQuestion.addEventListener('click', skipQuestionHandler);
-        nextQuestion.addEventListener('click', goToNextQuestion);
-        prevQuestion.addEventListener('click', goToPrevQuestion);
+        // ════════════════ elements
+        const $ = id => document.getElementById(id);
+        const startScreen = $('startScreen'), quizScreen = $('quizScreen'), resultsScreen = $('resultsScreen');
+        const questionCard = $('questionCard'), qCounter = $('qCounter'), questionText = $('questionText');
+        const questionMedia = $('questionMedia'), answerArea = $('answerArea'), feedbackPanel = $('feedbackPanel');
+        const prevBtn = $('prevBtn'), submitBtn = $('submitBtn'), skipBtn = $('skipBtn'), nextBtn = $('nextBtn');
+        const startQuiz = $('startQuiz'), fileInput = $('fileInput'), fileName = $('fileName');
+        const headerLeft = $('headerLeft'), headerRight = $('headerRight');
+        const progressFill = $('progressFill'), controlHint = $('controlHint');
 
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
+        // ════════════════ loading quizzes
+        // Hash protocols:
+        //   #quiz=<base64-json>&autostart=1&file=<basename>   (works on file:// too)
+        //   #quizfile=<basename>&autostart=1                  (fetched from quiz_server.py)
+        function autoLoadFromHash() {
+            if (!window.location.hash) return;
+            const params = new URLSearchParams(window.location.hash.slice(1));
 
-            reader.onload = function(e) {
-                try {
-                    questions = JSON.parse(e.target.result);
-                    startQuiz.disabled = false;
-                } catch (error) {
-                    alert('Error parsing file. Please ensure it\'s a valid JSON.');
-                }
-            };
+            const qParam = params.get('q');
+            if (qParam !== null && /^\d+$/.test(qParam)) pendingResume = parseInt(qParam, 10);
 
-            reader.readAsText(file);
+            const quizFile = params.get('quizfile');
+            if (quizFile && serverMode) {
+                loadQuizFromServer(quizFile, params.get('autostart') === '1');
+                return;
+            }
+            const encoded = params.get('quiz');
+            if (!encoded) return;
+            try {
+                const parsed = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+                if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('empty');
+                questions = parsed;
+                sourceFile = params.get('file') || null;
+                startQuiz.disabled = false;
+                if (params.get('autostart') === '1') startQuizHandler();
+            } catch (err) {
+                console.error('Failed to auto-load quiz from URL hash:', err);
+            }
         }
 
+        function loadQuizFromServer(name, autostart) {
+            fetch('/api/quiz?file=' + encodeURIComponent(name))
+                .then(r => { if (!r.ok) throw new Error('quiz not found'); return r.json(); })
+                .then(data => {
+                    if (!Array.isArray(data) || data.length === 0) throw new Error('empty quiz');
+                    questions = data;
+                    sourceFile = name;
+                    startQuiz.disabled = false;
+                    if (autostart) startQuizHandler();
+                })
+                .catch(err => console.error('Failed to load quiz from server:', err));
+        }
+
+        if (serverMode) {
+            fetch('/api/quizzes')
+                .then(r => r.json())
+                .then(data => {
+                    const names = (data.quizzes || []).filter(n => n.endsWith('.json'));
+                    if (!names.length) return;
+                    const box = $('quizListButtons');
+                    names.forEach(name => {
+                        const btn = document.createElement('button');
+                        btn.className = 'quiz-row';
+                        const label = document.createElement('span');
+                        label.textContent = name.replace(/-quiz\.json$|\.json$/, '').replace(/-/g, ' ');
+                        const arrow = document.createElement('span');
+                        arrow.className = 'arrow';
+                        arrow.textContent = 'begin →';
+                        btn.append(label, arrow);
+                        btn.addEventListener('click', () => loadQuizFromServer(name, true));
+                        box.appendChild(btn);
+                    });
+                    $('serverQuizzes').style.display = 'block';
+                })
+                .catch(() => {});
+        }
+
+        // ════════════════ continue on phone (hover QR)
+        // Server-served only: the QR encodes this machine's LAN URL, so it needs a
+        // reachable http origin (a file:// page has no server to hand off to).
+        if (serverMode) {
+            const dock = $('phoneDock'), qrBox = $('phoneQr');
+            const capEl = $('phoneCap'), urlEl = $('phoneUrl');
+            dock.hidden = false;
+            let lastKey = null, loading = false;
+
+            function refreshPhone() {
+                if (!sourceFile) {
+                    qrBox.innerHTML = '';
+                    capEl.textContent = 'Load a quiz first, then scan to continue on your phone.';
+                    urlEl.textContent = '';
+                    lastKey = null;
+                    return;
+                }
+                const q = quizScreen.hidden ? 0 : currentQuestion;
+                const key = sourceFile + '#' + q;
+                if (key === lastKey || loading) return;   // already showing this state
+                loading = true;
+                fetch(guarded('/api/phone?file=' + encodeURIComponent(sourceFile) + '&q=' + q))
+                    .then(r => r.json())
+                    .then(d => {
+                        loading = false;
+                        if (d && d.svg) {
+                            qrBox.innerHTML = d.svg;
+                            capEl.textContent = quizScreen.hidden
+                                ? 'Scan to open this quiz on your phone.'
+                                : 'Scan to resume at question ' + (q + 1) + ' on your phone.';
+                            urlEl.textContent = (d.url || '').replace(/^https?:\/\//, '');
+                            lastKey = key;
+                        } else {
+                            qrBox.innerHTML = '';
+                            capEl.textContent = (d && d.message) || 'Could not build a phone link.';
+                            urlEl.textContent = '';
+                        }
+                    })
+                    .catch(() => {
+                        loading = false;
+                        capEl.textContent = 'Phone link unavailable (server offline?).';
+                    });
+            }
+
+            dock.addEventListener('mouseenter', refreshPhone);
+            dock.addEventListener('focusin', refreshPhone);
+            $('phoneToggle').addEventListener('click', refreshPhone);
+        }
+
+        fileInput.addEventListener('change', event => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    questions = JSON.parse(e.target.result);
+                    sourceFile = file.name;
+                    fileName.textContent = file.name;
+                    startQuiz.disabled = false;
+                } catch {
+                    fileName.textContent = 'invalid JSON — pick another file';
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // ════════════════ AI grader settings (Ollama, fully local)
+        const modelSelect = $('modelSelect'), modelStatus = $('modelStatus');
+
+        function initAiSettings() {
+            if (!serverMode) {
+                modelStatus.textContent = 'AI grading needs the local server — run `quiz` in your terminal.';
+                modelSelect.style.display = 'none';
+                return;
+            }
+            fetch('/api/ai/models')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.online || !data.models.length) {
+                        modelStatus.textContent = 'Ollama is offline — start it to enable AI grading.';
+                        modelSelect.style.display = 'none';
+                        return;
+                    }
+                    modelSelect.innerHTML = '';
+                    data.models.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m;
+                        opt.textContent = m + (m === data.default ? '  · recommended' : '');
+                        modelSelect.appendChild(opt);
+                    });
+                    const saved = localStorage.getItem(MODEL_STORAGE);
+                    modelSelect.value = (saved && data.models.includes(saved)) ? saved : data.default;
+                    modelStatus.textContent = `Ollama online — ${data.models.length} models available.`;
+                })
+                .catch(() => { modelStatus.textContent = 'Could not reach the quiz server.'; });
+        }
+        modelSelect.addEventListener('change', () => localStorage.setItem(MODEL_STORAGE, modelSelect.value));
+        initAiSettings();
+
+        function currentModel() {
+            const saved = localStorage.getItem(MODEL_STORAGE);
+            return saved || modelSelect.value || '';
+        }
+
+        // ════════════════ screens
+        function showScreen(el) {
+            [startScreen, quizScreen, resultsScreen].forEach(s => { s.hidden = s !== el; });
+        }
+
+        function updateChrome() {
+            const answered = answeredQuestions.size;
+            const wrong = results.filter(r => !r.isCorrect && !r.skipped).length;
+            const skipped = results.filter(r => r.skipped).length;
+            headerLeft.textContent = sourceFile
+                ? sourceFile.replace(/-quiz\.json$|\.json$/, '').replace(/-/g, ' ')
+                : 'Quizzes';
+            headerRight.innerHTML = questions.length && !quizScreen.hidden
+                ? `<span class="ok">${score} ✓</span> · <span class="bad">${wrong} ✗</span>${skipped ? ` · ${skipped} skipped` : ''}`
+                : '';
+            progressFill.style.width = questions.length
+                ? (answered / questions.length * 100) + '%'
+                : '0%';
+        }
+
+        // ════════════════ quiz flow
         function startQuizHandler() {
             currentQuestion = 0;
             score = 0;
             results = [];
             answeredQuestions = new Set();
-            initialPage.style.display = 'none';
-            questionContainer.style.display = 'block';
-            resultContainer.style.display = 'none';
+            if (pendingResume != null && pendingResume >= 0 && pendingResume < questions.length) {
+                currentQuestion = pendingResume;   // resume at the question handed off from another device
+            }
+            pendingResume = null;
+            showScreen(quizScreen);
             displayQuestion();
+        }
+
+        function setHint(answered, type) {
+            if (answered) controlHint.textContent = '↵ next · ← back';
+            else if (type === 'multiple-choice') controlHint.textContent = '1–9 pick · ↵ submit';
+            else controlHint.textContent = '↵ submit · shift+↵ newline';
+        }
+
+        function flashHint(msg) {
+            controlHint.textContent = msg;
+            setTimeout(() => {
+                if (!quizScreen.hidden && questions[currentQuestion]) {
+                    setHint(answeredQuestions.has(currentQuestion), questions[currentQuestion].type);
+                }
+            }, 1800);
         }
 
         function displayQuestion() {
             const question = questions[currentQuestion];
             const isAnswered = answeredQuestions.has(currentQuestion);
 
-            // Update progress indicator
-            questionProgress.textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
-            questionElement.textContent = question.question;
-            optionsElement.innerHTML = '';
+            qCounter.textContent = `${currentQuestion + 1} / ${questions.length}`;
+            questionText.textContent = question.question;
+            renderMedia(question);
+            answerArea.innerHTML = '';
+            feedbackPanel.hidden = true;
+            feedbackPanel.innerHTML = '';
+            feedbackPanel.className = '';
 
-            // Reset feedback area
-            questionFeedback.style.display = 'none';
-            questionFeedback.className = '';
-            questionFeedback.innerHTML = '';
-
-            // Update navigation buttons
-            prevQuestion.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
-
-            // If already answered, show feedback and hide submit/skip
-            if (isAnswered) {
-                const result = results.find(r => r.questionIndex === currentQuestion);
-                if (result) {
-                    showFeedback(result.isCorrect, result.skipped, result.correctAnswer, question.explanation, result.sourceUrl);
-                }
-                submitButton.style.display = 'none';
-                skipQuestion.style.display = 'none';
-                nextQuestion.style.display = currentQuestion < questions.length - 1 ? 'inline-block' : 'none';
-
-                // Show "See Results" if on last question and answered
-                if (currentQuestion === questions.length - 1) {
-                    nextQuestion.textContent = 'See Results →';
-                    nextQuestion.style.display = 'inline-block';
-                }
-            } else {
-                submitButton.style.display = 'inline-block';
-                skipQuestion.style.display = 'inline-block';
-                nextQuestion.style.display = 'none';
-            }
+            prevBtn.style.visibility = currentQuestion > 0 ? 'visible' : 'hidden';
 
             if (question.type === 'multiple-choice') {
-                // Display multiple choice options
-                question.options.forEach((option, index) => {
-                    const button = document.createElement('div');
-                    button.className = 'option';
-                    button.textContent = option;
+                question.options.forEach((optionText, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option';
+                    btn.dataset.index = i;
+                    btn.innerHTML = `<span class="key">${i + 1}</span><span class="opt-text"></span><span class="mark"></span>`;
+                    btn.querySelector('.opt-text').textContent = optionText;
                     if (!isAnswered) {
-                        button.addEventListener('click', () => selectOption(button));
+                        btn.addEventListener('click', () => {
+                            if (btn.classList.contains('selected')) { submitAnswer(); return; }
+                            selectOption(i);
+                        });
                     } else {
-                        button.style.cursor = 'default';
-                        // Highlight the user's answer and correct answer
-                        const result = results.find(r => r.questionIndex === currentQuestion);
-                        if (result && option === result.userAnswer) {
-                            button.classList.add('selected');
-                        }
+                        btn.disabled = true;
                     }
-                    optionsElement.appendChild(button);
+                    answerArea.appendChild(btn);
                 });
-            } else if (question.type === 'open-ended') {
-                // Create answer section container
-                const answerSection = document.createElement('div');
-                answerSection.className = 'answer-section';
+            } else {
+                const ta = document.createElement('textarea');
+                ta.id = 'openAnswer';
+                ta.placeholder = 'Type your answer…';
+                ta.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAnswer(); }
+                });
+                answerArea.appendChild(ta);
+            }
 
-                // Add label for clarity
-                const label = document.createElement('label');
-                label.textContent = 'Your Answer:';
-                label.className = 'answer-label';
+            if (isAnswered) {
+                const result = results.find(r => r.questionIndex === currentQuestion);
+                if (result) paintAnswered(result, question);
+                afterAnswerControls();
+            } else {
+                submitBtn.hidden = false;
+                skipBtn.hidden = false;
+                nextBtn.hidden = true;
+                if (question.type === 'open-ended') setTimeout(() => $('openAnswer')?.focus(), 60);
+            }
 
-                // Create textarea for answer
-                const textArea = document.createElement('textarea');
-                textArea.className = 'open-ended-answer';
-                textArea.placeholder = 'Type your answer here...';
+            setHint(isAnswered, question.type);
+            updateChrome();
+            questionCard.classList.remove('fade-in');
+            void questionCard.offsetWidth;
+            questionCard.classList.add('fade-in');
+        }
 
-                if (isAnswered) {
-                    const result = results.find(r => r.questionIndex === currentQuestion);
-                    textArea.value = result ? result.userAnswer : '';
-                    textArea.disabled = true;
-                }
-
-                // Append elements
-                answerSection.appendChild(label);
-                answerSection.appendChild(textArea);
-                optionsElement.appendChild(answerSection);
+        function renderMedia(question) {
+            questionMedia.innerHTML = '';
+            questionMedia.className = '';
+            if (!question.image && !question.audio) return;
+            questionMedia.className = 'question-media';
+            if (question.image) {
+                const img = document.createElement('img');
+                img.src = resolveMediaUrl(question.image);
+                img.alt = 'Question image';
+                questionMedia.appendChild(img);
+            }
+            if (question.audio) {
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.preload = 'metadata';
+                audio.src = resolveMediaUrl(question.audio);
+                questionMedia.appendChild(audio);
             }
         }
 
-        function showFeedback(isCorrect, skipped, correctAnswer, explanation, sourceUrl) {
-            let feedbackClass = isCorrect ? 'correct' : (skipped ? 'skipped' : 'incorrect');
-            let title = isCorrect ? 'Correct!' : (skipped ? 'Skipped' : 'Incorrect');
-
-            questionFeedback.className = feedbackClass;
-            questionFeedback.innerHTML = `
-                <div class="feedback-title">${title}</div>
-                <p><strong>Correct answer:</strong> ${correctAnswer}</p>
-                ${explanation ? `<p><strong>Explanation:</strong> ${explanation}</p>` : ''}
-                ${sourceUrl ? `<p><strong>Source:</strong> <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer" class="source-link">${sourceUrl}</a></p>` : ''}
-            `;
-            questionFeedback.style.display = 'block';
+        function resolveMediaUrl(path) {
+            if (!path) return '';
+            if (/^(https?:|data:|file:)/i.test(path)) return path;
+            if (path.startsWith('/') || path.startsWith('~')) {
+                return serverMode
+                    ? guarded('/localfile?path=' + encodeURIComponent(path))
+                    : 'file://' + path.replace(/^~/, '');
+            }
+            return path;
         }
 
-        function selectOption(selectedOption) {
-            const options = optionsElement.getElementsByClassName('option');
-            for (let option of options) {
-                option.classList.remove('selected');
-            }
-            selectedOption.classList.add('selected');
+        function selectOption(index) {
+            answerArea.querySelectorAll('.option').forEach((o, i) => o.classList.toggle('selected', i === index));
+        }
+
+        function correctAnswerText(question) {
+            return question.type === 'multiple-choice'
+                ? question.options[question.correctAnswer]
+                : question.acceptedAnswers.join('  ·  ');
         }
 
         function submitAnswer() {
             const question = questions[currentQuestion];
-            let isCorrect = false;
-            let userAnswer = '';
-            let correctAnswer = '';
+            if (answeredQuestions.has(currentQuestion)) return;
+            let isCorrect = false, userAnswer = '';
 
             if (question.type === 'multiple-choice') {
-                const selectedOption = optionsElement.querySelector('.option.selected');
-                if (!selectedOption) {
-                    alert('Please select an answer');
-                    return;
-                }
-                const selectedAnswer = Array.from(optionsElement.children).indexOf(selectedOption);
-                isCorrect = selectedAnswer === question.correctAnswer;
-                userAnswer = question.options[selectedAnswer];
-                correctAnswer = question.options[question.correctAnswer];
-            } else if (question.type === 'open-ended') {
-                const textArea = optionsElement.querySelector('.open-ended-answer');
-                if (!textArea || !textArea.value.trim()) {
-                    alert('Please enter an answer');
-                    return;
-                }
-                userAnswer = textArea.value.trim();
-                isCorrect = question.acceptedAnswers.some(answer =>
-                    userAnswer.toLowerCase() === answer.toLowerCase()
-                );
-                correctAnswer = question.acceptedAnswers.join(' OR ');
-                textArea.disabled = true;
+                const selected = answerArea.querySelector('.option.selected');
+                if (!selected) return flashHint('pick an option first');
+                const idx = parseInt(selected.dataset.index);
+                isCorrect = idx === question.correctAnswer;
+                userAnswer = question.options[idx];
+            } else {
+                const ta = $('openAnswer');
+                if (!ta || !ta.value.trim()) return flashHint('type an answer first');
+                userAnswer = ta.value.trim();
+                isCorrect = question.acceptedAnswers.some(a => userAnswer.toLowerCase() === a.toLowerCase());
+                ta.disabled = true;
+                ta.blur();
             }
 
             if (isCorrect) score++;
-
-            // Mark question as answered
             answeredQuestions.add(currentQuestion);
-
-            results.push({
+            const result = {
                 questionIndex: currentQuestion,
                 question: question.question,
-                userAnswer: userAnswer,
-                correctAnswer: correctAnswer,
-                isCorrect: isCorrect,
+                userAnswer,
+                correctAnswer: correctAnswerText(question),
+                isCorrect,
                 skipped: false,
                 explanation: question.explanation || null,
                 sourceUrl: question.sourceUrl || null,
                 type: question.type
-            });
-
-            // Show feedback immediately
-            showFeedback(isCorrect, false, correctAnswer, question.explanation, question.sourceUrl);
-
-            // Update button visibility
-            submitButton.style.display = 'none';
-            skipQuestion.style.display = 'none';
-
-            if (currentQuestion < questions.length - 1) {
-                nextQuestion.textContent = 'Next Question →';
-                nextQuestion.style.display = 'inline-block';
-            } else {
-                nextQuestion.textContent = 'See Results →';
-                nextQuestion.style.display = 'inline-block';
-            }
+            };
+            results.push(result);
+            paintAnswered(result, question);
+            afterAnswerControls();
         }
 
         function skipQuestionHandler() {
             const question = questions[currentQuestion];
-            const correctAnswer = question.type === 'multiple-choice'
-                ? question.options[question.correctAnswer]
-                : question.acceptedAnswers.join(' OR ');
-
-            // Mark question as answered
+            if (answeredQuestions.has(currentQuestion)) return;
             answeredQuestions.add(currentQuestion);
-
-            results.push({
+            const result = {
                 questionIndex: currentQuestion,
                 question: question.question,
-                userAnswer: "Skipped",
-                correctAnswer: correctAnswer,
+                userAnswer: 'Skipped',
+                correctAnswer: correctAnswerText(question),
                 isCorrect: false,
                 skipped: true,
                 explanation: question.explanation || null,
                 sourceUrl: question.sourceUrl || null,
                 type: question.type
-            });
+            };
+            results.push(result);
+            const ta = $('openAnswer');
+            if (ta) ta.disabled = true;
+            paintAnswered(result, question);
+            afterAnswerControls();
+        }
 
-            // Show feedback immediately
-            showFeedback(false, true, correctAnswer, question.explanation, question.sourceUrl);
+        function afterAnswerControls() {
+            submitBtn.hidden = true;
+            skipBtn.hidden = true;
+            nextBtn.hidden = false;
+            nextBtn.innerHTML = (currentQuestion === questions.length - 1 || answeredQuestions.size === questions.length)
+                ? 'Results <kbd>↵</kbd>' : 'Next <kbd>↵</kbd>';
+            setHint(true, questions[currentQuestion].type);
+            updateChrome();
+        }
 
-            // Disable textarea if open-ended
-            const textArea = optionsElement.querySelector('.open-ended-answer');
-            if (textArea) textArea.disabled = true;
-
-            // Update button visibility
-            submitButton.style.display = 'none';
-            skipQuestion.style.display = 'none';
-
-            if (currentQuestion < questions.length - 1) {
-                nextQuestion.textContent = 'Next Question →';
-                nextQuestion.style.display = 'inline-block';
+        function paintAnswered(result, question) {
+            if (question.type === 'multiple-choice') {
+                answerArea.querySelectorAll('.option').forEach((o, i) => {
+                    o.disabled = true;
+                    o.classList.remove('selected');
+                    const isUser = question.options[i] === result.userAnswer;
+                    if (i === question.correctAnswer) {
+                        o.classList.add('right');
+                        o.querySelector('.mark').textContent = '✓';
+                    } else if (isUser && !result.skipped) {
+                        o.classList.add('wrong');
+                        o.querySelector('.mark').textContent = '✗';
+                    } else {
+                        o.classList.add('dim');
+                    }
+                });
             } else {
-                nextQuestion.textContent = 'See Results →';
-                nextQuestion.style.display = 'inline-block';
+                const ta = $('openAnswer');
+                if (ta) { ta.value = result.skipped ? '' : result.userAnswer; ta.disabled = true; }
+            }
+            showFeedback(result, question);
+        }
+
+        function showFeedback(result, question) {
+            const cls = result.isCorrect ? 'f-correct' : (result.skipped ? 'f-skipped' : 'f-incorrect');
+            const vText = result.isCorrect
+                ? (result.aiOverride ? 'Correct · AI' : 'Correct')
+                : (result.skipped ? 'Skipped' : 'Incorrect');
+            const showAi = question.type === 'open-ended' && !result.skipped && serverMode;
+            // options already show the right answer for MC — only spell it out when needed
+            const showAnswer = question.type === 'open-ended' && !result.isCorrect;
+
+            feedbackPanel.className = cls;
+            feedbackPanel.innerHTML = `
+                <div class="fb-head">
+                    <span class="fb-verdict">${vText}</span>
+                    ${showAnswer ? `<span class="fb-answer"><span class="lbl">answer</span>${escapeHtml(question.acceptedAnswers[0])}</span>` : ''}
+                    <span class="fb-actions">
+                        <button type="button" class="quiet" id="ankiBtn">+ Anki</button>
+                        ${showAi ? '<button type="button" class="quiet" id="aiBtn">AI check</button>' : ''}
+                        <button type="button" class="quiet danger" id="deleteBtn">Delete</button>
+                    </span>
+                </div>
+                ${question.explanation ? `<div class="fb-sub">${escapeHtml(question.explanation)}</div>` : ''}
+                ${result.sourceUrl ? `<div class="fb-sub"><a href="${encodeURI(result.sourceUrl)}" target="_blank" rel="noopener noreferrer">source ↗</a></div>` : ''}
+                <div class="action-status" id="actionStatus"></div>
+                <div id="aiFeedbackBox"></div>
+            `;
+            feedbackPanel.hidden = false;
+            renderAiFeedback(result);
+            $('ankiBtn').addEventListener('click', () => addToAnki(result, question));
+            $('deleteBtn').addEventListener('click', e => deleteQuestionHandler(e.currentTarget, result, question));
+            const aiBtn = $('aiBtn');
+            if (aiBtn) aiBtn.addEventListener('click', () => aiCheck(aiBtn, result, question));
+            // keep the feedback + controls visible without manual scrolling
+            setTimeout(() => {
+                $('controls').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 80);
+        }
+
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = String(s ?? '');
+            return d.innerHTML;
+        }
+
+        function setActionStatus(msg) {
+            const el = $('actionStatus');
+            if (el) el.textContent = msg;
+        }
+
+        // ════════════════ Anki
+        function cardFromResult(result) {
+            return {
+                front: result.question,
+                back: result.correctAnswer + (result.explanation ? '<br><br><i>' + result.explanation + '</i>' : ''),
+                source: result.sourceUrl || (sourceFile ? 'Quiz: ' + sourceFile : 'Quiz App')
+            };
+        }
+
+        async function postCard(card) {
+            const resp = await fetch(guarded('/api/anki'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(card)
+            });
+            return resp.json();
+        }
+
+        async function addToAnki(result, question) {
+            const btn = $('ankiBtn');
+            if (!serverMode) return setActionStatus('Anki needs the local server — run `quiz` in your terminal.');
+            btn.disabled = true;
+            btn.textContent = 'adding…';
+            setActionStatus('');
+            try {
+                const data = await postCard(cardFromResult(result));
+                setActionStatus(data.message || '');
+                if (data.ok) {
+                    btn.textContent = '✓ in Anki';
+                } else {
+                    btn.textContent = '+ Anki';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                btn.textContent = '+ Anki';
+                btn.disabled = false;
+                setActionStatus('Quiz server unreachable: ' + err.message);
             }
         }
 
-        function goToNextQuestion() {
-            // Check if all questions are answered
-            if (answeredQuestions.size === questions.length) {
-                showResults();
+        // ════════════════ delete
+        function deleteQuestionHandler(btn, result, question) {
+            if (!btn.dataset.armed) {
+                btn.dataset.armed = '1';
+                btn.classList.add('armed');
+                btn.textContent = 'confirm?';
+                setTimeout(() => {
+                    if (btn.isConnected) {
+                        delete btn.dataset.armed;
+                        btn.classList.remove('armed');
+                        btn.textContent = 'Delete';
+                    }
+                }, 4000);
                 return;
             }
+            const index = result.questionIndex;
+            if (serverMode && sourceFile) {
+                fetch(guarded('/api/quiz/delete-question'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file: sourceFile, index, question: question.question })
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        removeQuestionLocally(index);
+                        console.log('Delete question:', data.message);
+                    })
+                    .catch(() => removeQuestionLocally(index));
+            } else {
+                removeQuestionLocally(index);
+            }
+        }
 
-            // Move to next question
+        function removeQuestionLocally(index) {
+            questions.splice(index, 1);
+            const newAnswered = new Set();
+            answeredQuestions.forEach(i => {
+                if (i < index) newAnswered.add(i);
+                else if (i > index) newAnswered.add(i - 1);
+            });
+            answeredQuestions = newAnswered;
+            const rIdx = results.findIndex(r => r.questionIndex === index);
+            if (rIdx !== -1) {
+                if (results[rIdx].isCorrect) score--;
+                results.splice(rIdx, 1);
+            }
+            results.forEach(r => { if (r.questionIndex > index) r.questionIndex--; });
+            if (!questions.length) return newQuizHandler();
+            if (currentQuestion >= questions.length) currentQuestion = questions.length - 1;
+            displayQuestion();
+        }
+
+        // ════════════════ AI grading (local Ollama via quiz_server.py)
+        function renderAiFeedback(result) {
+            const box = $('aiFeedbackBox');
+            if (!box || !result.aiFeedback) return;
+            const ai = result.aiFeedback;
+            box.innerHTML = `
+                <div class="ai-box">
+                    <div class="ai-meta">${escapeHtml(ai.verdict.replace('_', ' '))} · ${escapeHtml(ai.model || 'local')}${ai.ms ? ' · ' + (ai.ms / 1000).toFixed(1) + 's' : ''}</div>
+                    <p>${escapeHtml(ai.feedback)}</p>
+                    ${!result.isCorrect && ai.verdict !== 'incorrect'
+                        ? '<button type="button" class="quiet approve" id="aiOverrideBtn">mark as correct</button>' : ''}
+                </div>`;
+            const overrideBtn = $('aiOverrideBtn');
+            if (overrideBtn) {
+                overrideBtn.addEventListener('click', () => {
+                    result.isCorrect = true;
+                    result.aiOverride = true;
+                    score++;
+                    displayQuestion();
+                });
+            }
+        }
+
+        async function aiCheck(btn, result, question) {
+            btn.disabled = true;
+            btn.textContent = 'grading…';
+            setActionStatus('');
+            try {
+                const resp = await fetch(guarded('/api/ai/grade'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: question.question,
+                        acceptedAnswers: question.acceptedAnswers,
+                        explanation: question.explanation || '',
+                        userAnswer: result.userAnswer,
+                        model: currentModel()
+                    })
+                });
+                const data = await resp.json();
+                if (!data.ok) throw new Error(data.message || 'grading failed');
+                result.aiFeedback = { verdict: data.verdict, feedback: data.feedback, model: data.model, ms: data.ms };
+                btn.textContent = 'AI check';
+                btn.disabled = false;
+                renderAiFeedback(result);
+            } catch (err) {
+                btn.textContent = 'AI check';
+                btn.disabled = false;
+                setActionStatus(err.message);
+            }
+        }
+
+        // ════════════════ navigation
+        function goToNextQuestion() {
+            if (answeredQuestions.size === questions.length) return showResults();
             if (currentQuestion < questions.length - 1) {
                 currentQuestion++;
                 displayQuestion();
             } else {
-                // If we're on the last question, show results
                 showResults();
             }
         }
@@ -1128,165 +1291,215 @@
             }
         }
 
+        // ════════════════ results
         function showResults() {
-            questionContainer.style.display = 'none';
-            resultContainer.style.display = 'block';
-            const skippedCount = results.filter(r => r.skipped).length;
-            const incorrectCount = results.filter(r => !r.isCorrect && !r.skipped).length;
-            const percentage = Math.round((score / questions.length) * 100);
+            showScreen(resultsScreen);
+            const skipped = results.filter(r => r.skipped).length;
+            const wrong = results.filter(r => !r.isCorrect && !r.skipped).length;
+            const pct = questions.length ? Math.round(score / questions.length * 100) : 0;
 
-            // Update score display
-            scoreElement.textContent = `${score} / ${questions.length}`;
+            $('scorePct').textContent = pct;
+            $('scoreSub').innerHTML =
+                `<span class="s-ok">${score} correct</span> · <span class="s-bad">${wrong} wrong</span>` +
+                (skipped ? ` · <span class="s-skip">${skipped} skipped</span>` : '') +
+                ` · ${questions.length} total`;
 
-            // Build subtext with percentage and stats
-            const subtextElement = document.getElementById('scoreSubtext');
-            let subtextParts = [`${percentage}%`];
-            if (skippedCount > 0) subtextParts.push(`${skippedCount} skipped`);
-            if (incorrectCount > 0) subtextParts.push(`${incorrectCount} incorrect`);
-            subtextElement.textContent = subtextParts.join(' · ');
-
-            // Sort results by question index for proper display order
-            const sortedResults = [...results].sort((a, b) => a.questionIndex - b.questionIndex);
-
-            feedbackElement.innerHTML = sortedResults.map((result) => {
-                let feedbackClass = result.isCorrect ? 'correct' : (result.skipped ? 'skipped' : 'incorrect');
-                let badgeText = result.isCorrect ? 'Correct' : (result.skipped ? 'Skipped' : 'Incorrect');
+            const sorted = [...results].sort((a, b) => a.questionIndex - b.questionIndex);
+            $('breakdown').innerHTML = sorted.map(r => {
+                const status = r.isCorrect ? 'ok' : (r.skipped ? 'skip' : 'bad');
                 return `
-                <div class="feedback ${feedbackClass}">
-                    <p><strong>Question ${result.questionIndex + 1}</strong><span class="status-badge">${badgeText}</span></p>
-                    <p>${result.question}</p>
-                    <p>Your answer: ${result.userAnswer}</p>
-                    <p>Correct answer: ${result.correctAnswer}</p>
-                    ${result.sourceUrl ? `<p>Source: <a href="${result.sourceUrl}" target="_blank" rel="noopener noreferrer" class="source-link">${result.sourceUrl}</a></p>` : ''}
-                </div>
-            `}).join('');
+                <div class="r-row">
+                    <input type="checkbox" class="question-select" data-index="${r.questionIndex}" checked onchange="updateSelectionCount()">
+                    <span class="r-status ${status}"></span>
+                    <div>
+                        <div class="r-q">${escapeHtml(r.question)}</div>
+                        <div class="r-detail">
+                            <b>${escapeHtml(r.userAnswer)}</b>${r.isCorrect ? '' : ' — answer: ' + escapeHtml(r.correctAnswer)}
+                            ${r.sourceUrl ? ` · <a href="${encodeURI(r.sourceUrl)}" target="_blank" rel="noopener noreferrer">source ↗</a>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            $('selectAllQuestions').checked = true;
+            updateSelectionCount();
+            $('resultsStatus').textContent = '';
+            progressFill.style.width = '100%';
+            headerRight.innerHTML = '';
+            window.scrollTo({ top: 0 });
         }
 
-        function downloadResults() {
-            const csvContent = "data:text/csv;charset=utf-8,"
-                + "Question,Your Answer,Correct Answer,Result\n"
-                + results.map(r => {
-                    const status = r.isCorrect ? "Correct" : (r.skipped ? "Skipped" : "Incorrect");
-                    return `"${r.question}","${r.userAnswer}","${r.correctAnswer}",${status}`;
-                }).join("\n");
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "quiz_results.csv");
-            document.body.appendChild(link);
-            link.click();
-        }
-        // Add the new event listener with the other listeners
-        const exportAnki = document.getElementById('exportToAnki');
-        exportAnki.addEventListener('click', downloadAnkiFormat);
-
-        // Add this new function before the closing script tag
-        function downloadAnkiFormat() {
-            const ankiContent = "data:text/plain;charset=utf-8,"
-                + results.map(r => `${r.question}; ${r.correctAnswer}`).join("\n");
-
-            const encodedUri = encodeURI(ankiContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "anki_cards.txt");
-            document.body.appendChild(link);
-            link.click();
+        function toggleSelectAll(checkbox) {
+            document.querySelectorAll('.question-select').forEach(cb => cb.checked = checkbox.checked);
+            updateSelectionCount();
         }
 
-        function retakeSameQuizHandler() {
+        function updateSelectionCount() {
+            const boxes = document.querySelectorAll('.question-select');
+            const checked = document.querySelectorAll('.question-select:checked');
+            const selectAll = $('selectAllQuestions');
+            if (selectAll) selectAll.checked = checked.length === boxes.length;
+            const el = $('selectionCount');
+            if (el) el.textContent = `${checked.length} / ${boxes.length} selected`;
+        }
+
+        function getSelectedResults() {
+            const checked = document.querySelectorAll('.question-select:checked');
+            const idx = new Set(Array.from(checked).map(cb => parseInt(cb.dataset.index)));
+            return results.filter(r => idx.has(r.questionIndex)).sort((a, b) => a.questionIndex - b.questionIndex);
+        }
+
+        function setResultsStatus(msg) { $('resultsStatus').textContent = msg; }
+
+        async function bulkAnki() {
+            const selected = getSelectedResults();
+            if (!selected.length) return setResultsStatus('Nothing selected.');
+            if (!serverMode) {
+                const txt = selected.map(r => `${r.question}; ${r.correctAnswer}`).join('\n');
+                return downloadFile(txt, 'anki_cards.txt', 'text/plain');
+            }
+            const btn = $('bulkAnkiBtn');
+            btn.disabled = true;
+            let added = 0, dupes = 0, failed = 0;
+            for (let i = 0; i < selected.length; i++) {
+                setResultsStatus(`Sending to Anki… ${i + 1}/${selected.length}`);
+                try {
+                    const data = await postCard(cardFromResult(selected[i]));
+                    if (data.ok) added++;
+                    else if ((data.message || '').toLowerCase().includes('duplicate')) dupes++;
+                    else failed++;
+                } catch { failed++; }
+            }
+            btn.disabled = false;
+            setResultsStatus(`Anki: ${added} added${dupes ? `, ${dupes} duplicates skipped` : ''}${failed ? `, ${failed} failed` : ''}.`);
+        }
+
+        function downloadFile(content, filename, mime) {
+            const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadCSV() {
+            const selected = getSelectedResults();
+            if (!selected.length) return setResultsStatus('Nothing selected.');
+            const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
+            const csv = 'Question,Your Answer,Correct Answer,Result\n' + selected.map(r =>
+                [esc(r.question), esc(r.userAnswer), esc(r.correctAnswer),
+                 r.isCorrect ? 'Correct' : (r.skipped ? 'Skipped' : 'Incorrect')].join(',')).join('\n');
+            downloadFile(csv, 'quiz_results.csv', 'text/csv');
+        }
+
+        function downloadMarkdown() {
+            const selected = getSelectedResults();
+            if (!selected.length) return setResultsStatus('Nothing selected.');
+            const date = new Date().toISOString().split('T')[0];
+            const sel = selected.filter(r => r.isCorrect).length;
+            const pct = ((sel / selected.length) * 100).toFixed(1);
+            let md = `# Quiz Results\n\n**Date:** ${date}\n**Score:** ${sel}/${selected.length} (${pct}%)\n\n---\n\n`;
+            md += `## Summary for LLM Review\n\nPlease review my quiz results and provide feedback on:\n`;
+            md += `1. Areas where I need improvement (incorrect answers)\n2. Patterns in my mistakes\n3. Suggested study topics based on my performance\n\n---\n\n## Detailed Results\n\n`;
+            selected.forEach(r => {
+                const status = r.isCorrect ? '✅ Correct' : (r.skipped ? '🟡 Skipped' : '❌ Incorrect');
+                md += `### Question ${r.questionIndex + 1}: ${status}\n\n**Question:** ${r.question}\n\n**Your Answer:** ${r.userAnswer}\n\n**Correct Answer:** ${r.correctAnswer}\n\n`;
+                if (r.explanation) md += `**Explanation:** ${r.explanation}\n\n`;
+                md += `---\n\n`;
+            });
+            const missed = selected.filter(r => !r.isCorrect);
+            if (missed.length) {
+                md += `## Questions to Review\n\n`;
+                missed.forEach((r, i) => {
+                    md += `${i + 1}. **${r.question}**\n   - You answered: ${r.userAnswer}\n   - Correct: ${r.correctAnswer}\n`;
+                    if (r.explanation) md += `   - Why: ${r.explanation}\n`;
+                    md += `\n`;
+                });
+            }
+            downloadFile(md, `quiz_results_${date}.md`, 'text/markdown');
+        }
+
+        function retakeHandler() {
             currentQuestion = 0;
             score = 0;
             results = [];
             answeredQuestions = new Set();
-            resultContainer.style.display = 'none';
-            questionContainer.style.display = 'block';
+            showScreen(quizScreen);
             displayQuestion();
         }
 
-        function loadNewQuizHandler() {
+        function newQuizHandler() {
             questions = [];
             currentQuestion = 0;
             score = 0;
             results = [];
             answeredQuestions = new Set();
+            sourceFile = null;
             fileInput.value = '';
+            fileName.textContent = '';
             startQuiz.disabled = true;
-            resultContainer.style.display = 'none';
-            questionContainer.style.display = 'none';
-            initialPage.style.display = 'block';
+            showScreen(startScreen);
+            progressFill.style.width = '0%';
+            headerLeft.textContent = 'Quizzes';
+            headerRight.innerHTML = '';
         }
 
-        function downloadMarkdownResults() {
-            const date = new Date().toISOString().split('T')[0];
-            const percentage = ((score / questions.length) * 100).toFixed(1);
+        // ════════════════ keyboard layer
+        document.addEventListener('keydown', e => {
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+            const tag = (e.target.tagName || '').toLowerCase();
+            if (tag === 'textarea' || tag === 'input' || tag === 'select') return;
 
-            let mdContent = `# Quiz Results\n\n`;
-            mdContent += `**Date:** ${date}\n`;
-            mdContent += `**Score:** ${score}/${questions.length} (${percentage}%)\n\n`;
-            mdContent += `---\n\n`;
-            mdContent += `## Summary for LLM Review\n\n`;
-            mdContent += `Please review my quiz results and provide feedback on:\n`;
-            mdContent += `1. Areas where I need improvement (incorrect answers)\n`;
-            mdContent += `2. Patterns in my mistakes\n`;
-            mdContent += `3. Suggested study topics based on my performance\n\n`;
-            mdContent += `---\n\n`;
-            mdContent += `## Detailed Results\n\n`;
-
-            // Sort results by question index for proper display order
-            const sortedResults = [...results].sort((a, b) => a.questionIndex - b.questionIndex);
-
-            sortedResults.forEach((r) => {
-                const status = r.isCorrect ? '✅ Correct' : (r.skipped ? '🟡 Skipped' : '❌ Incorrect');
-                mdContent += `### Question ${r.questionIndex + 1}: ${status}\n\n`;
-                mdContent += `**Question:** ${r.question}\n\n`;
-                mdContent += `**Your Answer:** ${r.userAnswer}\n\n`;
-                mdContent += `**Correct Answer:** ${r.correctAnswer}\n\n`;
-                if (r.explanation) {
-                    mdContent += `**Explanation:** ${r.explanation}\n\n`;
+            if (!startScreen.hidden) {
+                if (e.key === 'Enter' && !startQuiz.disabled) { e.preventDefault(); startQuizHandler(); }
+                return;
+            }
+            if (!quizScreen.hidden) {
+                const answered = answeredQuestions.has(currentQuestion);
+                const q = questions[currentQuestion];
+                if (!q) return;
+                if (!answered && q.type === 'multiple-choice' && /^[1-9]$/.test(e.key)) {
+                    const idx = parseInt(e.key) - 1;
+                    if (idx < q.options.length) { e.preventDefault(); selectOption(idx); }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    answered ? goToNextQuestion() : submitAnswer();
+                } else if ((e.key === 's' || e.key === 'S') && !answered) {
+                    e.preventDefault();
+                    skipQuestionHandler();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    goToPrevQuestion();
+                } else if (e.key === 'ArrowRight' && answered) {
+                    e.preventDefault();
+                    goToNextQuestion();
+                } else if ((e.key === 'a' || e.key === 'A') && answered) {
+                    const b = $('ankiBtn');
+                    if (b && !b.disabled) { e.preventDefault(); b.click(); }
+                } else if ((e.key === 'g' || e.key === 'G') && answered) {
+                    const b = $('aiBtn');
+                    if (b && !b.disabled) { e.preventDefault(); b.click(); }
                 }
-                mdContent += `---\n\n`;
-            });
-
-            // Add skipped questions summary
-            const skippedResults = results.filter(r => r.skipped);
-            if (skippedResults.length > 0) {
-                mdContent += `## Questions You Skipped (Need to Learn)\n\n`;
-                skippedResults.forEach((r, index) => {
-                    mdContent += `${index + 1}. **${r.question}**\n`;
-                    mdContent += `   - Correct: ${r.correctAnswer}\n`;
-                    if (r.explanation) {
-                        mdContent += `   - Why: ${r.explanation}\n`;
-                    }
-                    mdContent += `\n`;
-                });
             }
+        });
 
-            // Add incorrect questions summary at the end
-            const incorrectResults = results.filter(r => !r.isCorrect && !r.skipped);
-            if (incorrectResults.length > 0) {
-                mdContent += `## Questions to Review (Incorrect Answers)\n\n`;
-                incorrectResults.forEach((r, index) => {
-                    mdContent += `${index + 1}. **${r.question}**\n`;
-                    mdContent += `   - You answered: ${r.userAnswer}\n`;
-                    mdContent += `   - Correct: ${r.correctAnswer}\n`;
-                    if (r.explanation) {
-                        mdContent += `   - Why: ${r.explanation}\n`;
-                    }
-                    mdContent += `\n`;
-                });
-            }
+        // ════════════════ wiring
+        startQuiz.addEventListener('click', startQuizHandler);
+        submitBtn.addEventListener('click', submitAnswer);
+        skipBtn.addEventListener('click', skipQuestionHandler);
+        nextBtn.addEventListener('click', goToNextQuestion);
+        prevBtn.addEventListener('click', goToPrevQuestion);
+        $('retakeBtn').addEventListener('click', retakeHandler);
+        $('newQuizBtn').addEventListener('click', newQuizHandler);
+        $('bulkAnkiBtn').addEventListener('click', bulkAnki);
+        $('csvBtn').addEventListener('click', downloadCSV);
+        $('mdBtn').addEventListener('click', downloadMarkdown);
 
-            const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `quiz_results_${date}.md`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
+        autoLoadFromHash();
+        window.addEventListener('hashchange', autoLoadFromHash);
     </script>
 </body>
 </html>
