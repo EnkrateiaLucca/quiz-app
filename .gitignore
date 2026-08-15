@@ -44,3 +44,6 @@ media/images/*
 media/audio/*
 !media/images/.gitkeep
 !media/audio/.gitkeep 
+# Quiz app runtime
+__pycache__/
+.trash/

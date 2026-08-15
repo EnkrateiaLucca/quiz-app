@@ -85,6 +85,37 @@
         .meta .ok { color: var(--green); }
         .meta .bad { color: var(--red); }
 
+        /* ── quit to home (quiz screen header) ───── */
+        .header-right { display: inline-flex; align-items: baseline; gap: 14px; }
+        .quit-quiz {
+            position: relative;
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-40);
+            background: none; border: none; padding: 2px 0; cursor: pointer;
+            transition: color 0.13s ease;
+        }
+        .quit-quiz[hidden] { display: none; }
+        .quit-quiz:hover { color: var(--ink); }
+        .quit-quiz .qq-x { font-size: 12px; line-height: 1; }
+        .quit-quiz .qq-tip {
+            position: absolute; right: 0; top: calc(100% + 8px); z-index: 41;
+            white-space: nowrap; font-family: var(--mono); font-size: 10px;
+            letter-spacing: 0.04em; text-transform: none;
+            color: var(--bg); background: var(--ink);
+            padding: 6px 9px; border-radius: 7px;
+            box-shadow: 0 6px 20px rgba(26, 24, 19, 0.18);
+            opacity: 0; visibility: hidden; transform: translateY(-3px);
+            transition: opacity .14s, transform .14s, visibility .14s; pointer-events: none;
+        }
+        .quit-quiz .qq-tip::after {
+            content: ''; position: absolute; bottom: 100%; right: 12px;
+            border: 5px solid transparent; border-bottom-color: var(--ink);
+        }
+        .quit-quiz:hover .qq-tip, .quit-quiz:focus-visible .qq-tip {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+
         /* ── continue on phone (hover QR) ─────────── */
         #phoneDock {
             position: fixed; right: 18px; bottom: 16px; z-index: 40;
@@ -167,6 +198,46 @@
         .quiz-row:hover { border-color: var(--ink); }
         .quiz-row .arrow { font-family: var(--mono); font-size: 10.5px; color: var(--ink-40); }
         .quiz-row:hover .arrow { color: var(--ink); }
+
+        /* ── in-progress queue ── */
+        .ip-row {
+            display: flex; align-items: center; gap: 12px;
+            width: 100%; text-align: left;
+            padding: 11px 14px; margin-bottom: 6px;
+            background: var(--raised); border: 1px solid var(--line);
+            border-radius: 6px; cursor: pointer;
+            transition: border-color 0.12s ease;
+        }
+        .ip-row:hover { border-color: var(--ink); }
+        .ip-main { flex: 1; min-width: 0; }
+        .ip-title {
+            font-family: var(--sans); font-size: 15px; font-weight: 500;
+            color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .ip-meta {
+            font-family: var(--mono); font-size: 10.5px; color: var(--ink-40);
+            margin-top: 3px; letter-spacing: 0.02em;
+        }
+        .ip-meta .ok { color: var(--green); }
+        .ip-meta .bad { color: var(--red); }
+        .ip-bar {
+            height: 3px; border-radius: 2px; background: var(--line-soft);
+            margin-top: 7px; overflow: hidden;
+        }
+        .ip-bar > span { display: block; height: 100%; background: var(--amber); }
+        .ip-resume { font-family: var(--mono); font-size: 10.5px; color: var(--ink-40); white-space: nowrap; }
+        .ip-row:hover .ip-resume { color: var(--ink); }
+        .ip-discard {
+            flex: none; border: none; background: transparent; cursor: pointer;
+            font-size: 15px; line-height: 1; color: var(--ink-40); padding: 4px 6px;
+            border-radius: 4px;
+        }
+        .ip-discard:hover { color: var(--red); background: var(--red-bg); }
+        .ip-discard.armed {
+            color: var(--red); background: var(--red-bg);
+            font-family: var(--mono); font-size: 10.5px; font-weight: 500;
+        }
+        .quiz-row .arrow { transition: color 0.12s ease; }
 
         .upload-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         #fileInput { display: none; }
@@ -496,6 +567,145 @@
         }
         .export-group { display: flex; gap: 16px; margin-left: auto; align-items: center; }
 
+        /* ── AI tutor: launcher + drawer ────────── */
+        #tutorLauncher {
+            position: fixed; left: 18px; bottom: 16px; z-index: 40;
+            display: inline-flex; align-items: center; gap: 7px;
+            font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-60);
+            background: var(--raised); border: 1px solid var(--line);
+            border-radius: 999px; padding: 8px 13px; cursor: pointer;
+            box-shadow: 0 3px 14px rgba(26, 24, 19, 0.08);
+            transition: color .15s, border-color .15s, transform .15s;
+        }
+        #tutorLauncher:hover { color: var(--ink); border-color: var(--ink-40); transform: translateY(-1px); }
+        #tutorLauncher .spark { font-size: 12px; line-height: 1; }
+        #tutorLauncher[hidden] { display: none; }
+        /* shortcut badge sitting in the pill */
+        #tutorLauncher .t-key {
+            font-family: var(--mono); font-size: 9px; line-height: 1;
+            padding: 2px 4px; border: 1px solid var(--line); border-radius: 3px;
+            color: var(--ink-40); background: var(--bg);
+        }
+        #tutorLauncher:hover .t-key { color: var(--ink); border-color: var(--ink-40); }
+
+        #tutorScrim {
+            position: fixed; inset: 0; z-index: 50;
+            background: rgba(26, 24, 19, 0.18);
+            opacity: 0; visibility: hidden; transition: opacity .2s, visibility .2s;
+        }
+        #tutorScrim.open { opacity: 1; visibility: visible; }
+
+        #tutorPanel {
+            position: fixed; top: 0; right: 0; z-index: 51;
+            width: min(420px, 100vw); height: 100%;
+            background: var(--bg); border-left: 1px solid var(--line);
+            box-shadow: -14px 0 40px rgba(26, 24, 19, 0.14);
+            display: flex; flex-direction: column;
+            transform: translateX(100%); transition: transform .24s ease;
+        }
+        #tutorPanel.open { transform: translateX(0); }
+
+        .tutor-head {
+            display: flex; align-items: center; gap: 10px;
+            padding: 16px 18px; border-bottom: 1px solid var(--line);
+        }
+        .tutor-head .t-title {
+            font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--ink); font-weight: 500;
+        }
+        .tutor-head .t-ctx {
+            font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--ink-40);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .tutor-head .t-close {
+            margin-left: auto; background: none; border: none; cursor: pointer;
+            font-size: 20px; line-height: 1; color: var(--ink-40); padding: 0 2px;
+        }
+        .tutor-head .t-close:hover { color: var(--ink); }
+
+        #tutorMessages {
+            flex: 1; overflow-y: auto; padding: 18px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .t-msg { font-size: 14px; line-height: 1.55; max-width: 92%; }
+        .t-msg.user {
+            align-self: flex-end; background: var(--ink); color: var(--bg);
+            padding: 8px 12px; border-radius: 12px 12px 3px 12px; white-space: pre-wrap;
+        }
+        .t-msg.ai {
+            align-self: flex-start; color: var(--ink);
+        }
+        .t-msg.ai p { margin: 0 0 8px; }
+        .t-msg.ai p:last-child { margin-bottom: 0; }
+        .t-msg.ai code {
+            font-family: var(--mono); font-size: 12.5px;
+            background: var(--line-soft); padding: 1px 4px; border-radius: 3px;
+        }
+        .t-msg.ai strong { font-weight: 600; }
+        .t-msg.ai .t-meta {
+            font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--ink-40); margin-bottom: 4px;
+        }
+        .t-msg.sys {
+            align-self: center; font-family: var(--mono); font-size: 10px;
+            letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-40);
+            text-align: center;
+        }
+        .t-edit {
+            align-self: stretch; background: var(--amber-bg);
+            border: 1px solid rgba(184, 134, 11, 0.35); border-radius: 10px;
+            padding: 10px 12px; font-size: 12.5px;
+        }
+        .t-edit .t-edit-head {
+            font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--amber); margin-bottom: 5px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .t-edit .t-edit-q { color: var(--ink); line-height: 1.45; }
+        .t-edit .t-edit-actions { margin-top: 8px; display: flex; gap: 16px; }
+        .t-typing { align-self: flex-start; color: var(--ink-40); font-size: 13px; }
+        .t-typing span {
+            display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+            background: var(--ink-40); margin-right: 3px;
+            animation: t-blink 1.2s infinite both;
+        }
+        .t-typing span:nth-child(2) { animation-delay: .2s; }
+        .t-typing span:nth-child(3) { animation-delay: .4s; }
+        @keyframes t-blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+        .tutor-input {
+            border-top: 1px solid var(--line); padding: 12px 14px;
+            display: flex; gap: 8px; align-items: flex-end;
+        }
+        .tutor-input textarea {
+            flex: 1; resize: none; font-family: var(--sans); font-size: 14px;
+            line-height: 1.4; color: var(--ink); background: var(--raised);
+            border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px;
+            max-height: 120px; min-height: 40px;
+        }
+        .tutor-input textarea:focus { outline: none; border-color: var(--ink-40); }
+        .tutor-input .t-send {
+            flex-shrink: 0; background: var(--ink); color: var(--bg);
+            border: none; border-radius: 8px; padding: 0 14px; height: 40px;
+            font-family: var(--sans); font-size: 13.5px; font-weight: 500; cursor: pointer;
+            transition: opacity .12s;
+        }
+        .tutor-input .t-send:hover:not(:disabled) { opacity: 0.85; }
+        .tutor-input .t-send:disabled { opacity: 0.3; cursor: not-allowed; }
+        .tutor-quick {
+            display: flex; gap: 8px; flex-wrap: wrap; padding: 0 14px 12px;
+        }
+        .tutor-quick button {
+            font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.05em;
+            text-transform: uppercase; color: var(--ink-60);
+            background: var(--raised); border: 1px solid var(--line);
+            border-radius: 999px; padding: 5px 10px; cursor: pointer;
+            transition: color .12s, border-color .12s;
+        }
+        .tutor-quick button:hover { color: var(--ink); border-color: var(--ink-40); }
+
         @keyframes fade {
             from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
@@ -511,6 +721,8 @@
             #controlHint { display: none; }
             .export-group { margin-left: 0; }
             .fb-actions { margin-left: 0; width: 100%; }
+            #tutorPanel { width: 100vw; border-left: none; }
+            #tutorLauncher { left: 12px; bottom: 12px; }
         }
     </style>
 </head>
@@ -524,18 +736,48 @@
         <button id="phoneToggle" aria-label="Continue on phone">📱 <span>Phone</span></button>
     </div>
 
+    <!-- ══ AI TUTOR ══ -->
+    <button id="tutorLauncher" hidden aria-label="Ask AI about this question" title="Ask AI about this question (press E)">
+        <span class="spark">✦</span><span>Ask AI</span><kbd class="t-key">E</kbd>
+    </button>
+    <div id="tutorScrim"></div>
+    <aside id="tutorPanel" aria-label="AI tutor" aria-hidden="true">
+        <div class="tutor-head">
+            <span class="t-title">✦ Tutor</span>
+            <span class="t-ctx" id="tutorCtx"></span>
+            <button class="t-close" id="tutorClose" aria-label="Close">×</button>
+        </div>
+        <div id="tutorMessages"></div>
+        <div class="tutor-quick" id="tutorQuick"></div>
+        <div class="tutor-input">
+            <textarea id="tutorInput" rows="1" placeholder="Ask about this question…"></textarea>
+            <button class="t-send" id="tutorSend">Send</button>
+        </div>
+    </aside>
+
     <div class="progress-track"><div id="progressFill"></div></div>
 
     <div class="shell">
         <header>
             <span class="meta" id="headerLeft">Quizzes</span>
-            <span class="meta" id="headerRight"></span>
+            <span class="header-right">
+                <span class="meta" id="headerRight"></span>
+                <button id="quitQuizBtn" class="quit-quiz" hidden aria-label="Back to quizzes">
+                    <span class="qq-label">Quizzes</span><span class="qq-x">✕</span>
+                    <span class="qq-tip">Back to quizzes · progress is saved</span>
+                </button>
+            </span>
         </header>
 
         <!-- ══ START ══ -->
         <section id="startScreen">
             <h1>Quizzes</h1>
             <p class="lede">Answer from the keyboard. Send what matters to Anki. Open-ended answers graded locally by Ollama.</p>
+
+            <div id="inProgressWrap" style="display: none;">
+                <p class="section-label">In progress · resume where you left off</p>
+                <div id="inProgressList"></div>
+            </div>
 
             <div id="serverQuizzes" style="display: none;">
                 <p class="section-label">On disk</p>
@@ -658,6 +900,152 @@
         }
         const MODEL_STORAGE = 'quiz-ai-model';
 
+        // ════════════════ in-progress queue (localStorage-backed)
+        // Every partially-answered quiz is persisted under `quiz-progress:<id>` so
+        // it survives reloads and shows up in the "In progress" list on the home
+        // screen. Fully-answered or untouched quizzes are removed (queue = only
+        // genuinely-unfinished quizzes).
+        const PROGRESS_PREFIX = 'quiz-progress:';
+
+        function hashStr(s) {
+            let h = 0;
+            for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
+            return (h >>> 0).toString(36);
+        }
+
+        // Stable identity for the loaded quiz: prefer its filename, fall back to a
+        // content hash for base64/hash-only loads that carry no name.
+        function quizId() {
+            return sourceFile ? 'file:' + sourceFile : 'hash:' + hashStr(JSON.stringify(questions));
+        }
+
+        function saveProgress() {
+            if (!questions.length) return;
+            const id = quizId();
+            const answered = answeredQuestions.size;
+            // Only keep quizzes that are actually mid-flight.
+            if (answered === 0 || answered >= questions.length) { clearProgress(id); return; }
+            const entry = {
+                id,
+                name: sourceFile || null,
+                questions,
+                currentQuestion,
+                score,
+                results,
+                answered: [...answeredQuestions],
+                total: questions.length,
+                updatedAt: Date.now(),
+            };
+            try { localStorage.setItem(PROGRESS_PREFIX + id, JSON.stringify(entry)); }
+            catch (e) { console.warn('Could not save quiz progress:', e); }
+        }
+
+        function clearProgress(id) {
+            try { localStorage.removeItem(PROGRESS_PREFIX + (id || quizId())); } catch (e) {}
+        }
+
+        function readProgress(id) {
+            try {
+                const e = JSON.parse(localStorage.getItem(PROGRESS_PREFIX + id));
+                if (e && Array.isArray(e.questions) && e.answered && e.answered.length < e.total) return e;
+            } catch (_) {}
+            return null;
+        }
+
+        function loadProgressList() {
+            const out = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k || !k.startsWith(PROGRESS_PREFIX)) continue;
+                try {
+                    const e = JSON.parse(localStorage.getItem(k));
+                    if (e && Array.isArray(e.questions) && e.answered && e.answered.length < e.total) out.push(e);
+                } catch (_) {}
+            }
+            return out.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        }
+
+        function resumeProgress(entry) {
+            questions = entry.questions;
+            results = entry.results || [];
+            answeredQuestions = new Set(entry.answered || []);
+            score = entry.score || 0;
+            sourceFile = entry.name || null;
+            currentQuestion = Math.min(entry.currentQuestion || 0, questions.length - 1);
+            pendingResume = null;
+            startQuiz.disabled = false;
+            showScreen(quizScreen);
+            displayQuestion();
+        }
+
+        function relTime(ts) {
+            if (!ts) return '';
+            const s = Math.max(1, Math.round((Date.now() - ts) / 1000));
+            if (s < 60) return 'just now';
+            const m = Math.round(s / 60);
+            if (m < 60) return m + 'm ago';
+            const h = Math.round(m / 60);
+            if (h < 24) return h + 'h ago';
+            return Math.round(h / 24) + 'd ago';
+        }
+
+        function prettyQuizName(name, questions) {
+            if (name) return name.replace(/-quiz\.json$|\.json$/, '').replace(/-/g, ' ');
+            return (questions && questions[0] ? questions[0].question.slice(0, 40) + '…' : 'Untitled quiz');
+        }
+
+        function renderInProgress() {
+            const wrap = $('inProgressWrap'), list = $('inProgressList');
+            if (!wrap || !list) return;
+            const entries = loadProgressList();
+            if (!entries.length) { wrap.style.display = 'none'; list.innerHTML = ''; return; }
+            list.innerHTML = '';
+            entries.forEach(entry => {
+                const answered = entry.answered.length;
+                const correct = (entry.results || []).filter(r => r.isCorrect).length;
+                const wrong = (entry.results || []).filter(r => !r.isCorrect && !r.skipped).length;
+                const pct = Math.round(answered / entry.total * 100);
+
+                const row = document.createElement('div');
+                row.className = 'ip-row';
+
+                const main = document.createElement('div');
+                main.className = 'ip-main';
+                const title = document.createElement('div');
+                title.className = 'ip-title';
+                title.textContent = prettyQuizName(entry.name, entry.questions);
+                const meta = document.createElement('div');
+                meta.className = 'ip-meta';
+                meta.innerHTML = `${answered}/${entry.total} answered · ` +
+                    `<span class="ok">${correct}✓</span> <span class="bad">${wrong}✗</span> · ${relTime(entry.updatedAt)}`;
+                const bar = document.createElement('div');
+                bar.className = 'ip-bar';
+                const barFill = document.createElement('span');
+                barFill.style.width = pct + '%';
+                bar.appendChild(barFill);
+                main.append(title, meta, bar);
+
+                const resume = document.createElement('span');
+                resume.className = 'ip-resume';
+                resume.textContent = 'resume →';
+
+                const discard = document.createElement('button');
+                discard.className = 'ip-discard';
+                discard.title = 'Discard progress';
+                discard.textContent = '✕';
+                discard.addEventListener('click', ev => {
+                    ev.stopPropagation();
+                    clearProgress(entry.id);
+                    renderInProgress();
+                });
+
+                row.append(main, resume, discard);
+                row.addEventListener('click', () => resumeProgress(entry));
+                list.appendChild(row);
+            });
+            wrap.style.display = 'block';
+        }
+
         // ════════════════ elements
         const $ = id => document.getElementById(id);
         const startScreen = $('startScreen'), quizScreen = $('quizScreen'), resultsScreen = $('resultsScreen');
@@ -718,21 +1106,67 @@
                     const names = (data.quizzes || []).filter(n => n.endsWith('.json'));
                     if (!names.length) return;
                     const box = $('quizListButtons');
+                    box.innerHTML = '';
                     names.forEach(name => {
-                        const btn = document.createElement('button');
-                        btn.className = 'quiz-row';
+                        const row = document.createElement('div');
+                        row.className = 'quiz-row';
                         const label = document.createElement('span');
                         label.textContent = name.replace(/-quiz\.json$|\.json$/, '').replace(/-/g, ' ');
+
+                        const right = document.createElement('span');
+                        right.style.cssText = 'display:flex; align-items:center; gap:10px; flex:none;';
                         const arrow = document.createElement('span');
                         arrow.className = 'arrow';
                         arrow.textContent = 'begin →';
-                        btn.append(label, arrow);
-                        btn.addEventListener('click', () => loadQuizFromServer(name, true));
-                        box.appendChild(btn);
+                        const del = document.createElement('button');
+                        del.className = 'ip-discard';
+                        del.title = 'Delete this quiz';
+                        del.textContent = '✕';
+                        del.addEventListener('click', ev => {
+                            ev.stopPropagation();
+                            if (!del.dataset.armed) {
+                                del.dataset.armed = '1';
+                                del.classList.add('armed');
+                                del.textContent = 'delete?';
+                                setTimeout(() => {
+                                    if (del.isConnected) {
+                                        delete del.dataset.armed;
+                                        del.classList.remove('armed');
+                                        del.textContent = '✕';
+                                    }
+                                }, 4000);
+                                return;
+                            }
+                            deleteQuizFile(name, row);
+                        });
+                        right.append(arrow, del);
+                        row.append(label, right);
+                        row.addEventListener('click', () => loadQuizFromServer(name, true));
+                        box.appendChild(row);
                     });
                     $('serverQuizzes').style.display = 'block';
                 })
                 .catch(() => {});
+        }
+
+        // Delete a whole quiz file from the home-screen list (server moves it to
+        // .trash). Also drops any in-progress entry so the two lists stay in sync.
+        function deleteQuizFile(name, row) {
+            if (!serverMode) return;
+            fetch(guarded('/api/quiz/delete'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: name })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.ok) { console.warn('Delete quiz failed:', data.message); return; }
+                    row.remove();
+                    clearProgress('file:' + name);
+                    renderInProgress();
+                    if (!$('quizListButtons').children.length) $('serverQuizzes').style.display = 'none';
+                })
+                .catch(e => console.warn('Delete quiz error:', e));
         }
 
         // ════════════════ continue on phone (hover QR)
@@ -842,6 +1276,12 @@
         // ════════════════ screens
         function showScreen(el) {
             [startScreen, quizScreen, resultsScreen].forEach(s => { s.hidden = s !== el; });
+            // The tutor launcher + quit control only make sense while a live
+            // question is on screen.
+            const onQuiz = el === quizScreen;
+            tutorLauncher.hidden = !onQuiz;
+            quitQuizBtn.hidden = !onQuiz;
+            if (!onQuiz) closeTutor();
         }
 
         function updateChrome() {
@@ -857,10 +1297,25 @@
             progressFill.style.width = questions.length
                 ? (answered / questions.length * 100) + '%'
                 : '0%';
+            // Persist the live state so this quiz can be resumed later. Runs only
+            // while the quiz screen is active; save/clear logic lives in saveProgress.
+            if (!quizScreen.hidden) saveProgress();
         }
 
         // ════════════════ quiz flow
         function startQuizHandler() {
+            // If this quiz already has saved progress, continue it rather than
+            // restarting — so Begin / autostart never wipes an in-flight run.
+            const saved = readProgress(quizId());
+            if (saved) {
+                resumeProgress(saved);
+                if (pendingResume != null && pendingResume >= 0 && pendingResume < questions.length) {
+                    currentQuestion = pendingResume;   // phone hand-off jumps to a specific question
+                    displayQuestion();
+                }
+                pendingResume = null;
+                return;
+            }
             currentQuestion = 0;
             score = 0;
             results = [];
@@ -945,6 +1400,7 @@
             questionCard.classList.remove('fade-in');
             void questionCard.offsetWidth;
             questionCard.classList.add('fade-in');
+            refreshTutorContext();
         }
 
         function renderMedia(question) {
@@ -1203,6 +1659,7 @@
         }
 
         function removeQuestionLocally(index) {
+            clearProgress();   // id may change once a question is removed; drop the old entry
             questions.splice(index, 1);
             const newAnswered = new Set();
             answeredQuestions.forEach(i => {
@@ -1294,6 +1751,8 @@
         // ════════════════ results
         function showResults() {
             showScreen(resultsScreen);
+            // Finished quizzes leave the in-progress queue.
+            if (answeredQuestions.size >= questions.length) clearProgress();
             const skipped = results.filter(r => r.skipped).length;
             const wrong = results.filter(r => !r.isCorrect && !r.skipped).length;
             const pct = questions.length ? Math.round(score / questions.length * 100) : 0;
@@ -1438,6 +1897,7 @@
             results = [];
             answeredQuestions = new Set();
             sourceFile = null;
+            tutorConvos = {};
             fileInput.value = '';
             fileName.textContent = '';
             startQuiz.disabled = true;
@@ -1445,10 +1905,261 @@
             progressFill.style.width = '0%';
             headerLeft.textContent = 'Quizzes';
             headerRight.innerHTML = '';
+            renderInProgress();
         }
+
+        // ════════════════ AI tutor (chat + live question editing)
+        // One conversation per question index; context sent to the model always
+        // includes the whole quiz plus the current question, so it answers directly.
+        let tutorConvos = {};            // index -> [{role:'user'|'assistant', content}]
+        let tutorBusy = false;
+        const tutorLauncher = $('tutorLauncher'), tutorPanel = $('tutorPanel');
+        const quitQuizBtn = $('quitQuizBtn');
+        // Quit = back to the quiz list. Progress is already persisted to
+        // localStorage, so the quiz reappears under "In progress" to resume.
+        quitQuizBtn.addEventListener('click', newQuizHandler);
+        const tutorScrim = $('tutorScrim'), tutorMessages = $('tutorMessages');
+        const tutorInput = $('tutorInput'), tutorSend = $('tutorSend');
+        const tutorCtx = $('tutorCtx'), tutorQuick = $('tutorQuick'), tutorClose = $('tutorClose');
+
+        const QUICK_PROMPTS = [
+            ['Explain', 'Explain this question and why the correct answer is right.'],
+            ['Simpler', 'Explain this concept as simply as possible, with an example.'],
+            ['Make it harder', 'Rewrite this question to be noticeably harder, keeping the same topic.'],
+            ['Rephrase', 'Rephrase this question more clearly without changing what it tests.'],
+        ];
+
+        function convo() {
+            if (!tutorConvos[currentQuestion]) tutorConvos[currentQuestion] = [];
+            return tutorConvos[currentQuestion];
+        }
+
+        function refreshTutorContext() {
+            const q = questions[currentQuestion];
+            if (tutorCtx) tutorCtx.textContent = q ? `Q${currentQuestion + 1}/${questions.length}` : '';
+            if (!tutorPanel.classList.contains('open')) return;
+            renderTutor();   // question changed while open -> switch conversation view
+        }
+
+        function openTutor() {
+            if (!questions[currentQuestion]) return;
+            tutorScrim.classList.add('open');
+            tutorPanel.classList.add('open');
+            tutorPanel.setAttribute('aria-hidden', 'false');
+            refreshTutorContext();
+            renderTutor();
+            setTimeout(() => tutorInput.focus(), 120);
+        }
+        function closeTutor() {
+            tutorScrim.classList.remove('open');
+            tutorPanel.classList.remove('open');
+            tutorPanel.setAttribute('aria-hidden', 'true');
+        }
+
+        // Minimal, safe markdown: escape first, then bold + inline code + paragraphs.
+        function tutorMarkdown(text) {
+            let s = escapeHtml(text);
+            s = s.replace(/`([^`]+)`/g, (_, c) => `<code>${c}</code>`);
+            s = s.replace(/\*\*([^*]+)\*\*/g, (_, b) => `<strong>${b}</strong>`);
+            return s.split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+        }
+
+        function editIsValid(e) {
+            if (!e || typeof e !== 'object' || !e.question) return false;
+            if (e.type === 'multiple-choice')
+                return Array.isArray(e.options) && e.options.length >= 2
+                    && Number.isInteger(e.correctAnswer)
+                    && e.correctAnswer >= 0 && e.correctAnswer < e.options.length;
+            if (e.type === 'open-ended')
+                return Array.isArray(e.acceptedAnswers) && e.acceptedAnswers.length > 0;
+            return false;
+        }
+
+        function bubble(cls, html) {
+            const div = document.createElement('div');
+            div.className = 't-msg ' + cls;
+            // 'sys' notices carry server/error strings (which can embed a
+            // user-supplied model name) — render them as text, never HTML.
+            if (cls === 'sys') div.textContent = html;
+            else div.innerHTML = html;
+            tutorMessages.appendChild(div);
+            return div;
+        }
+
+        function renderTutor() {
+            tutorMessages.innerHTML = '';
+            const q = questions[currentQuestion];
+            if (!q) return;
+            const kind = q.type === 'multiple-choice' ? 'multiple-choice' : 'open-ended';
+            bubble('sys', `Loaded with the full quiz · asking about Q${currentQuestion + 1} (${kind})`);
+            convo().forEach(m => {
+                if (m.role === 'user') bubble('user', escapeHtml(m.content));
+                else renderAiTurn(m.content, m.model, m.edit);
+            });
+            tutorMessages.scrollTop = tutorMessages.scrollHeight;
+        }
+
+        function renderAiTurn(text, model, edit) {
+            bubble('ai', (model ? `<div class="t-meta">${escapeHtml(model)}</div>` : '')
+                + tutorMarkdown(text || '…'));
+            if (edit && editIsValid(edit)) {
+                const already = JSON.stringify(questions[currentQuestion]) === canonEdit(edit);
+                const card = document.createElement('div');
+                card.className = 't-edit';
+                card.innerHTML = `
+                    <div class="t-edit-head">✎ ${already ? 'question updated' : 'suggested edit'}</div>
+                    <div class="t-edit-q">${escapeHtml(edit.question)}</div>
+                    <div class="t-edit-actions"></div>`;
+                const actions = card.querySelector('.t-edit-actions');
+                if (already) {
+                    const undo = document.createElement('button');
+                    undo.className = 'quiet'; undo.textContent = 'undo';
+                    undo.addEventListener('click', undoEdit);
+                    actions.appendChild(undo);
+                } else {
+                    const apply = document.createElement('button');
+                    apply.className = 'quiet'; apply.textContent = 'apply to quiz';
+                    apply.addEventListener('click', () => applyEdit(edit));
+                    actions.appendChild(apply);
+                }
+                tutorMessages.appendChild(card);
+            }
+        }
+
+        // Merge preserved media/source fields the model may have dropped, then
+        // stringify with the same key handling used for the "already applied" check.
+        function canonEdit(edit) {
+            return JSON.stringify(mergeEdit(edit));
+        }
+        function mergeEdit(edit) {
+            const prev = questions[currentQuestion] || {};
+            const next = { question: edit.question, type: edit.type };
+            if (edit.type === 'multiple-choice') {
+                next.options = edit.options;
+                next.correctAnswer = edit.correctAnswer;
+            } else {
+                next.acceptedAnswers = edit.acceptedAnswers;
+            }
+            const expl = edit.explanation != null ? edit.explanation : prev.explanation;
+            if (expl) next.explanation = expl;
+            ['image', 'audio', 'sourceUrl'].forEach(k => {
+                const v = edit[k] != null ? edit[k] : prev[k];
+                if (v) next[k] = v;
+            });
+            return next;
+        }
+
+        let editUndoStack = null;   // {index, before}
+        function applyEdit(edit) {
+            const idx = currentQuestion;
+            editUndoStack = { index: idx, before: questions[idx] };
+            questions[idx] = mergeEdit(edit);
+            // Editing invalidates any prior attempt — let the user test the new form.
+            if (answeredQuestions.has(idx)) {
+                answeredQuestions.delete(idx);
+                const rIdx = results.findIndex(r => r.questionIndex === idx);
+                if (rIdx !== -1) {
+                    if (results[rIdx].isCorrect) score--;
+                    results.splice(rIdx, 1);
+                }
+            }
+            persistEdit(idx, editUndoStack.before.question, questions[idx]);
+            displayQuestion();          // reflect immediately on the quiz page
+            renderTutor();              // repaint chat: edit card flips to "updated"
+            bubble('sys', 'Question updated — try it again on the left.');
+            tutorMessages.scrollTop = tutorMessages.scrollHeight;
+        }
+        function undoEdit() {
+            if (!editUndoStack) return;
+            const { index, before } = editUndoStack;
+            questions[index] = before;
+            answeredQuestions.delete(index);
+            const rIdx = results.findIndex(r => r.questionIndex === index);
+            if (rIdx !== -1) { if (results[rIdx].isCorrect) score--; results.splice(rIdx, 1); }
+            persistEdit(index, questions[index].question, before);
+            editUndoStack = null;
+            displayQuestion();
+            renderTutor();
+        }
+
+        function persistEdit(index, oldText, newQuestion) {
+            if (!serverMode || !sourceFile) return;   // hash/file mode: live-only edit
+            clearProgress();   // saved-progress id may change with the new content
+            fetch(guarded('/api/quiz/update-question'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: sourceFile, index, oldQuestion: oldText, question: newQuestion })
+            }).then(r => r.json()).then(d => console.log('Update question:', d.message))
+              .catch(() => {});
+        }
+
+        async function sendTutor(text) {
+            text = (text || '').trim();
+            if (!text || tutorBusy || !questions[currentQuestion]) return;
+            if (!serverMode) {
+                bubble('sys', 'AI tutor needs the local server — run `quiz` in your terminal.');
+                return;
+            }
+            convo().push({ role: 'user', content: text });
+            bubble('user', escapeHtml(text));
+            tutorInput.value = '';
+            tutorInput.style.height = 'auto';
+            tutorBusy = true; tutorSend.disabled = true;
+            const typing = document.createElement('div');
+            typing.className = 't-typing';
+            typing.innerHTML = '<span></span><span></span><span></span>';
+            tutorMessages.appendChild(typing);
+            tutorMessages.scrollTop = tutorMessages.scrollHeight;
+            try {
+                const resp = await fetch(guarded('/api/ai/chat'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        quiz: questions,
+                        currentIndex: currentQuestion,
+                        messages: convo(),
+                        model: currentModel()
+                    })
+                });
+                const data = await resp.json();
+                typing.remove();
+                if (!data.ok) { bubble('sys', data.message || 'Tutor failed.'); return; }
+                const edit = editIsValid(data.edit) ? data.edit : null;
+                convo().push({ role: 'assistant', content: data.reply, model: data.model, edit });
+                renderAiTurn(data.reply, data.model, edit);
+                tutorMessages.scrollTop = tutorMessages.scrollHeight;
+            } catch (err) {
+                typing.remove();
+                bubble('sys', 'Quiz server unreachable: ' + err.message);
+            } finally {
+                tutorBusy = false; tutorSend.disabled = false;
+                tutorInput.focus();
+            }
+        }
+
+        // quick-prompt chips
+        QUICK_PROMPTS.forEach(([label, prompt]) => {
+            const b = document.createElement('button');
+            b.type = 'button'; b.textContent = label;
+            b.addEventListener('click', () => sendTutor(prompt));
+            tutorQuick.appendChild(b);
+        });
+
+        tutorLauncher.addEventListener('click', openTutor);
+        tutorClose.addEventListener('click', closeTutor);
+        tutorScrim.addEventListener('click', closeTutor);
+        tutorSend.addEventListener('click', () => sendTutor(tutorInput.value));
+        tutorInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTutor(tutorInput.value); }
+        });
+        tutorInput.addEventListener('input', () => {
+            tutorInput.style.height = 'auto';
+            tutorInput.style.height = Math.min(tutorInput.scrollHeight, 120) + 'px';
+        });
 
         // ════════════════ keyboard layer
         document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && tutorPanel.classList.contains('open')) { closeTutor(); return; }
             if (e.metaKey || e.ctrlKey || e.altKey) return;
             const tag = (e.target.tagName || '').toLowerCase();
             if (tag === 'textarea' || tag === 'input' || tag === 'select') return;
@@ -1482,6 +2193,9 @@
                 } else if ((e.key === 'g' || e.key === 'G') && answered) {
                     const b = $('aiBtn');
                     if (b && !b.disabled) { e.preventDefault(); b.click(); }
+                } else if (e.key === 'e' || e.key === 'E') {
+                    e.preventDefault();
+                    openTutor();
                 }
             }
         });
@@ -1500,6 +2214,7 @@
 
         autoLoadFromHash();
         window.addEventListener('hashchange', autoLoadFromHash);
+        renderInProgress();
     </script>
 </body>
 </html>
