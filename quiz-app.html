@@ -355,6 +355,28 @@
             letter-spacing: -0.005em;
             margin-bottom: 18px;
         }
+        /* Source/citation chip: which paper/book/resource the question is about. */
+        .q-source {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 100%;
+            font-family: var(--mono);
+            font-size: 11px;
+            line-height: 1.3;
+            letter-spacing: 0.01em;
+            color: var(--ink-60);
+            background: var(--raised);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 4px 11px;
+            margin-bottom: 12px;
+        }
+        .q-source[hidden] { display: none; }
+        .q-source .src-icon { font-size: 12px; flex: none; opacity: 0.8; }
+        .q-source .src-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .q-source a { color: var(--blue); text-decoration: none; }
+        .q-source a:hover { text-decoration: underline; }
 
         .question-media { margin: 0 0 18px; }
         .question-media img {
@@ -814,7 +836,7 @@
     <span class="k">"options"</span>: [<span class="s">"London"</span>, <span class="s">"Berlin"</span>, <span class="s">"Paris"</span>, <span class="s">"Madrid"</span>],
     <span class="k">"correctAnswer"</span>: <span class="n">2</span>,
     <span class="k">"explanation"</span>: <span class="s">"Paris has been the capital since 987 AD."</span>,
-    <span class="k">"sourceUrl"</span>: <span class="s">"https://en.wikipedia.org/wiki/Paris"</span>,
+    <span class="k">"source"</span>: {<span class="k">"title"</span>: <span class="s">"Encyclopedia of France"</span>, <span class="k">"url"</span>: <span class="s">"https://en.wikipedia.org/wiki/Paris"</span>},
     <span class="k">"image"</span>: <span class="s">"media/images/paris.png"</span>
   },
   {
@@ -827,6 +849,11 @@
                         <p class="settings-note" style="margin-top: 12px;">
                             <code>image</code> / <code>audio</code> are optional on any question —
                             relative to the quiz-app folder, absolute paths, or URLs.
+                            <code>source</code> names the paper/book/resource a question is about
+                            (shown as a citation chip on the question); use
+                            <code>{"title": "…", "url": "…"}</code>, a plain
+                            <code>"title"</code> string, or the legacy
+                            <code>sourceTitle</code>/<code>sourceUrl</code> fields.
                         </p>
                     </div>
                 </details>
@@ -837,6 +864,7 @@
         <section id="quizScreen" hidden>
             <div id="questionCard">
                 <div class="q-counter" id="qCounter"></div>
+                <div class="q-source" id="questionSource" hidden></div>
                 <h2 id="questionText"></h2>
                 <div id="questionMedia"></div>
                 <div id="answerArea"></div>
@@ -867,6 +895,7 @@
                 <div class="results-actions">
                     <button class="btn" id="retakeBtn">Retake</button>
                     <button class="btn ghost" id="newQuizBtn">New quiz</button>
+                    <button class="quiet danger" id="deleteQuizBtn" hidden>Delete quiz</button>
                     <div class="export-group">
                         <button class="quiet" id="bulkAnkiBtn">→ Anki</button>
                         <button class="quiet" id="csvBtn">CSV</button>
@@ -1110,6 +1139,7 @@
                     names.forEach(name => {
                         const row = document.createElement('div');
                         row.className = 'quiz-row';
+                        row.dataset.quizFile = name;
                         const label = document.createElement('span');
                         label.textContent = name.replace(/-quiz\.json$|\.json$/, '').replace(/-/g, ' ');
 
@@ -1349,6 +1379,7 @@
 
             qCounter.textContent = `${currentQuestion + 1} / ${questions.length}`;
             questionText.textContent = question.question;
+            renderSource(question);
             renderMedia(question);
             answerArea.innerHTML = '';
             feedbackPanel.hidden = true;
@@ -1401,6 +1432,47 @@
             void questionCard.offsetWidth;
             questionCard.classList.add('fade-in');
             refreshTutorContext();
+        }
+
+        // Normalize the many accepted source shapes into {title, url} (or null).
+        // Accepts: source: "Title" | {title, url} | {title} | {url};
+        // plus legacy sourceTitle / sourceUrl fields.
+        function getSource(question) {
+            let title = null, url = question.sourceUrl || null;
+            const s = question.source;
+            if (typeof s === 'string') title = s;
+            else if (s && typeof s === 'object') { title = s.title || null; url = s.url || url; }
+            if (question.sourceTitle) title = question.sourceTitle;
+            if (!title && !url) return null;
+            return { title: title || url, url: url || null };
+        }
+
+        // Render the "which paper/book/resource" citation chip on the question.
+        // Title always shown; hyperlinked when a URL is available.
+        function renderSource(question) {
+            const el = $('questionSource');
+            el.innerHTML = '';
+            const src = getSource(question);
+            if (!src) { el.hidden = true; return; }
+            const icon = document.createElement('span');
+            icon.className = 'src-icon';
+            icon.textContent = '📄';
+            const label = document.createElement('span');
+            label.className = 'src-title';
+            if (src.url) {
+                const a = document.createElement('a');
+                a.href = src.url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.textContent = src.title;
+                a.title = src.title;
+                label.appendChild(a);
+            } else {
+                label.textContent = src.title;
+                label.title = src.title;
+            }
+            el.append(icon, label);
+            el.hidden = false;
         }
 
         function renderMedia(question) {
@@ -1781,6 +1853,13 @@
             }).join('');
             $('selectAllQuestions').checked = true;
             updateSelectionCount();
+            // "Delete quiz" removes the file from disk — only offer it for a
+            // server-served, disk-backed quiz (hash/file mode has nothing to delete).
+            const delBtn = $('deleteQuizBtn');
+            delBtn.hidden = !(serverMode && sourceFile);
+            delete delBtn.dataset.armed;
+            delBtn.classList.remove('armed');
+            delBtn.textContent = 'Delete quiz';
             $('resultsStatus').textContent = '';
             progressFill.style.width = '100%';
             headerRight.innerHTML = '';
@@ -1906,6 +1985,45 @@
             headerLeft.textContent = 'Quizzes';
             headerRight.innerHTML = '';
             renderInProgress();
+        }
+
+        // Delete the whole quiz file from disk (server moves it to .trash — reversible),
+        // then drop any saved progress and return to the quiz list. Two-tap to confirm.
+        function deleteQuizHandler(btn) {
+            if (!serverMode || !sourceFile) return;
+            if (!btn.dataset.armed) {
+                btn.dataset.armed = '1';
+                btn.classList.add('armed');
+                btn.textContent = 'confirm?';
+                setTimeout(() => {
+                    if (btn.isConnected && btn.dataset.armed) {
+                        delete btn.dataset.armed;
+                        btn.classList.remove('armed');
+                        btn.textContent = 'Delete quiz';
+                    }
+                }, 4000);
+                return;
+            }
+            const name = sourceFile;
+            btn.disabled = true;
+            setResultsStatus('Deleting quiz…');
+            fetch(guarded('/api/quiz/delete'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: name })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.ok) { setResultsStatus('Delete failed: ' + (data.message || 'unknown error')); btn.disabled = false; return; }
+                    clearProgress('file:' + name);
+                    const row = document.querySelector(`#quizListButtons [data-quiz-file="${CSS.escape(name)}"]`);
+                    if (row) {
+                        row.remove();
+                        if (!$('quizListButtons').children.length) $('serverQuizzes').style.display = 'none';
+                    }
+                    newQuizHandler();
+                })
+                .catch(e => { setResultsStatus('Delete error: ' + e.message); btn.disabled = false; });
         }
 
         // ════════════════ AI tutor (chat + live question editing)
@@ -2042,7 +2160,7 @@
             }
             const expl = edit.explanation != null ? edit.explanation : prev.explanation;
             if (expl) next.explanation = expl;
-            ['image', 'audio', 'sourceUrl'].forEach(k => {
+            ['image', 'audio', 'sourceUrl', 'sourceTitle', 'source'].forEach(k => {
                 const v = edit[k] != null ? edit[k] : prev[k];
                 if (v) next[k] = v;
             });
@@ -2208,6 +2326,7 @@
         prevBtn.addEventListener('click', goToPrevQuestion);
         $('retakeBtn').addEventListener('click', retakeHandler);
         $('newQuizBtn').addEventListener('click', newQuizHandler);
+        $('deleteQuizBtn').addEventListener('click', e => deleteQuizHandler(e.currentTarget));
         $('bulkAnkiBtn').addEventListener('click', bulkAnki);
         $('csvBtn').addEventListener('click', downloadCSV);
         $('mdBtn').addEventListener('click', downloadMarkdown);
