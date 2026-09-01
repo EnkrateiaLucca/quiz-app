@@ -612,6 +612,16 @@
             border-top: 1px solid var(--line-soft);
         }
         .r-row input[type="checkbox"] { margin-top: 4px; flex-shrink: 0; }
+        /* keyboard cursor: a left rule + faint wash, no layout shift */
+        .r-row { padding-left: 8px; border-left: 2px solid transparent; transition: background .12s, border-color .12s; }
+        .r-row.cursor { border-left-color: var(--ink); background: var(--raised); }
+        #resultsHint {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--ink-40);
+        }
         .r-status { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; margin-top: 7px; }
         .r-status.ok { background: var(--green); }
         .r-status.bad { background: var(--red); }
@@ -783,7 +793,7 @@
 
         @media (max-width: 640px) {
             .shell { padding: 28px 16px 48px; }
-            #controlHint { display: none; }
+            #controlHint, #resultsHint { display: none; }
             .export-group { margin-left: 0; }
             .fb-actions { margin-left: 0; width: 100%; }
             #tutorPanel { width: 100vw; border-left: none; }
@@ -956,6 +966,7 @@
 
                 <div class="select-row">
                     <label><input type="checkbox" id="selectAllQuestions" checked onchange="toggleSelectAll(this)"> Select all</label>
+                    <span id="resultsHint">↑↓ move · space pick · s all · w missed · a → anki</span>
                     <span class="meta" id="selectionCount"></span>
                 </div>
                 <div id="breakdown"></div>
@@ -1915,7 +1926,7 @@
             $('breakdown').innerHTML = sorted.map(r => {
                 const status = r.isCorrect ? 'ok' : (r.skipped ? 'skip' : 'bad');
                 return `
-                <div class="r-row">
+                <div class="r-row" data-status="${status}" onclick="rowClick(event, this)">
                     <input type="checkbox" class="question-select" data-index="${r.questionIndex}" checked onchange="updateSelectionCount()">
                     <span class="r-status ${status}"></span>
                     <div>
@@ -1929,6 +1940,7 @@
             }).join('');
             $('selectAllQuestions').checked = true;
             updateSelectionCount();
+            setCursor(0);
             // "Delete quiz" removes the file from disk — only offer it for a
             // server-served, disk-backed quiz (hash/file mode has nothing to delete).
             const delBtn = $('deleteQuizBtn');
@@ -1945,9 +1957,49 @@
             window.scrollTo({ top: 0 });
         }
 
+        // ── results keyboard cursor ─────────────
+        // One highlighted row moves with ↑↓/jk; space toggles it. Everything the
+        // keys do also has a mouse equivalent, so the two stay in sync.
+        let cursorIdx = 0;
+
+        function rows() { return Array.from(document.querySelectorAll('#breakdown .r-row')); }
+
+        function setCursor(i) {
+            const all = rows();
+            if (!all.length) return;
+            cursorIdx = Math.max(0, Math.min(i, all.length - 1));
+            all.forEach((row, n) => row.classList.toggle('cursor', n === cursorIdx));
+            all[cursorIdx].scrollIntoView({ block: 'nearest' });
+        }
+
+        function toggleRow(i, force) {
+            const row = rows()[i];
+            if (!row) return;
+            const cb = row.querySelector('.question-select');
+            cb.checked = force === undefined ? !cb.checked : force;
+            updateSelectionCount();
+        }
+
+        // Click anywhere on a row to pick it — except the checkbox (native) and
+        // the source link (navigation).
+        function rowClick(e, row) {
+            if (e.target.closest('a')) return;
+            setCursor(rows().indexOf(row));
+            // A focused checkbox would swallow the arrow/space keys, so hand focus
+            // straight back to the document and let the cursor carry the state.
+            if (e.target.matches('input')) return e.target.blur();
+            toggleRow(cursorIdx);
+        }
+
+        function selectWhere(pred) {
+            rows().forEach(row => { row.querySelector('.question-select').checked = pred(row); });
+            updateSelectionCount();
+        }
+
         function toggleSelectAll(checkbox) {
             document.querySelectorAll('.question-select').forEach(cb => cb.checked = checkbox.checked);
             updateSelectionCount();
+            checkbox.blur();
         }
 
         function updateSelectionCount() {
@@ -2362,6 +2414,37 @@
 
             if (!startScreen.hidden) {
                 if (e.key === 'Enter' && !startQuiz.disabled) { e.preventDefault(); startQuizHandler(); }
+                return;
+            }
+            if (!resultsScreen.hidden) {
+                if (e.key === 'ArrowDown' || e.key === 'j') {
+                    e.preventDefault();
+                    if (e.shiftKey) toggleRow(cursorIdx, true);
+                    setCursor(cursorIdx + 1);
+                    if (e.shiftKey) toggleRow(cursorIdx, true);
+                } else if (e.key === 'ArrowUp' || e.key === 'k') {
+                    e.preventDefault();
+                    if (e.shiftKey) toggleRow(cursorIdx, true);
+                    setCursor(cursorIdx - 1);
+                    if (e.shiftKey) toggleRow(cursorIdx, true);
+                } else if (e.key === ' ') {
+                    e.preventDefault();
+                    toggleRow(cursorIdx);
+                } else if (e.key === 's' || e.key === 'S') {
+                    e.preventDefault();
+                    const all = rows();
+                    const every = all.length && all.every(r => r.querySelector('.question-select').checked);
+                    selectWhere(() => !every);
+                } else if (e.key === 'w' || e.key === 'W') {
+                    e.preventDefault();
+                    selectWhere(r => r.dataset.status !== 'ok');
+                } else if (e.key === 'a' || e.key === 'A') {
+                    const b = $('bulkAnkiBtn');
+                    if (b && !b.disabled) { e.preventDefault(); b.click(); }
+                } else if (e.key === 'e' || e.key === 'E') {
+                    e.preventDefault();
+                    openTutor();
+                }
                 return;
             }
             if (!quizScreen.hidden) {
