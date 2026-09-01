@@ -545,6 +545,31 @@
         }
         .action-status:empty { display: none; }
 
+        .quote-box {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-left: 2px solid var(--amber);
+            background: var(--amber-bg);
+            border-radius: 0 6px 6px 0;
+            animation: fade 0.2s ease both;
+        }
+        .quote-box .q-meta {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-bottom: 4px;
+        }
+        .quote-box .q-text {
+            font-size: 13px;
+            line-height: 1.5;
+            user-select: all;
+            cursor: text;
+        }
+        .quote-box .q-actions { display: flex; gap: 16px; margin-top: 6px; align-items: baseline; }
+        .quote-box a { color: var(--blue); text-decoration: none; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; }
+
         .ai-box {
             margin-top: 10px;
             padding: 10px 12px;
@@ -1527,6 +1552,153 @@
             return { title: title || url, url: url || null };
         }
 
+        // ════════════════ source article split view
+        // Split a source URL into the bare article URL + a highlight target. The
+        // fragment is either a Chrome text fragment (#:~:text=[prefix-,]start[,end][,-suffix])
+        // or a plain #anchor. Native text fragments don't fire inside an iframe, so
+        // the injected highlighter (see quiz_server.py) re-finds the text itself.
+        function parseSourceUrl(url) {
+            if (!url) return null;
+            const hash = url.indexOf('#');
+            const articleUrl = hash === -1 ? url : url.slice(0, hash);
+            const frag = hash === -1 ? '' : url.slice(hash + 1);
+            if (!frag) return { articleUrl, target: null };
+            const TF = ':~:text=';
+            const i = frag.indexOf(TF);
+            if (i === -1) {
+                return { articleUrl, target: { kind: 'anchor', id: decodeURIComponent(frag) } };
+            }
+            const raw = frag.slice(i + TF.length).split('&')[0];
+            let prefix = '', suffix = '';
+            const mid = [];
+            raw.split(',').forEach(part => {
+                const p = decodeURIComponent(part);
+                if (p.endsWith('-') && !prefix && !mid.length) prefix = p.slice(0, -1);
+                else if (p.startsWith('-') && !suffix) suffix = p.slice(1);
+                else mid.push(p);
+            });
+            return { articleUrl, target: {
+                kind: 'text', prefix, suffix,
+                textStart: mid[0] || '', textEnd: mid[1] || ''
+            } };
+        }
+
+        // Right pane loads via the /api/article proxy (same-origin), so we can
+        // postMessage the highlight target into it once it fires 'quiz-article-ready'.
+        let articleState = { url: null, ready: false, pending: null };
+
+        function postHighlight(target) {
+            if (!target) return;
+            const win = $('articleFrame').contentWindow;
+            if (articleState.ready && win) win.postMessage({ type: 'quiz-highlight', target }, '*');
+            else articleState.pending = target;   // flushed on 'quiz-article-ready'
+        }
+
+        window.addEventListener('message', ev => {
+            if (ev.data && ev.data.type === 'quiz-highlight-result') {
+                clearTimeout(quoteTimer);
+                if (!ev.data.found) renderQuoteFallback('passage not found in the page');
+                return;
+            }
+            if (ev.data && ev.data.type === 'quiz-article-ready') {
+                articleState.ready = true;
+                if (articleState.pending) { postHighlight(articleState.pending); articleState.pending = null; }
+            }
+        });
+
+        // True when the loaded quiz has at least one http(s) source URL — gates the
+        // split-view toggle (server mode only; the pane needs the proxy).
+        function quizHasSource() {
+            return questions.some(q => {
+                const s = getSource(q);
+                return s && s.url && /^https?:/i.test(s.url);
+            });
+        }
+
+        // Open (or re-highlight) the source article in the right pane and jump to
+        // the passage the given source URL points at.
+        function openInArticle(sourceUrl) {
+            const parsed = parseSourceUrl(sourceUrl);
+            if (!parsed || !/^https?:/i.test(parsed.articleUrl)) return;
+            document.body.classList.add('split', 'article-open');
+            const pane = $('articlePane');
+            pane.hidden = false;
+            $('articleOpenTab').href = sourceUrl;
+            if (articleState.url !== parsed.articleUrl) {
+                // different article → (re)load the iframe; highlight flushes on ready
+                articleState = { url: parsed.articleUrl, ready: false, pending: parsed.target };
+                try { $('articleTitle').textContent = new URL(parsed.articleUrl).hostname; }
+                catch (e) { $('articleTitle').textContent = 'Source'; }
+                $('articleFrame').src = guarded('/api/article?url=' + encodeURIComponent(parsed.articleUrl));
+            } else {
+                postHighlight(parsed.target);   // same article already loaded
+            }
+        }
+
+        function closeArticle() {
+            document.body.classList.remove('split', 'article-open');
+            $('articlePane').hidden = true;
+        }
+
+        // ── "show in article" with a quote fallback ──
+        // Proxied pages fail in ways we can't control (paywall, JS-rendered body,
+        // fetch error) and a text fragment can miss even on a page that loads. When
+        // the pane doesn't land on the passage, print the quote here so the reader
+        // can ⌘F it in the real source.
+        let quoteTimer = null;
+        let quoteFallback = null;   // { target, url } awaiting a highlight verdict
+        const QUOTE_WAIT_MS = 3500;
+
+        function showInArticle(sourceUrl) {
+            const parsed = parseSourceUrl(sourceUrl);
+            openInArticle(sourceUrl);
+            const box = $('quoteBox');
+            if (box) box.innerHTML = '';
+            clearTimeout(quoteTimer);
+            const target = parsed && parsed.target;
+            if (!target || !target.textStart) return;   // nothing quotable to fall back to
+            quoteFallback = { target, url: parsed.articleUrl };
+            quoteTimer = setTimeout(() => renderQuoteFallback('the article did not load'), QUOTE_WAIT_MS);
+        }
+
+        function renderQuoteFallback(reason) {
+            const box = $('quoteBox');
+            if (!box || !quoteFallback) return;
+            const { target, url } = quoteFallback;
+            const quote = target.textStart + (target.textEnd ? ' … ' + target.textEnd : '');
+            box.innerHTML = `
+                <div class="quote-box">
+                    <div class="q-meta">${escapeHtml(reason)} — ⌘F this in the source</div>
+                    <div class="q-text" id="quoteText">“${escapeHtml(quote)}”</div>
+                    <div class="q-actions">
+                        <button type="button" class="quiet" id="copyQuoteBtn">Copy phrase</button>
+                        <a href="${encodeURI(url)}" target="_blank" rel="noopener noreferrer">open source ↗</a>
+                    </div>
+                </div>`;
+            $('copyQuoteBtn').addEventListener('click', async e => {
+                const btn = e.currentTarget;
+                try {
+                    await navigator.clipboard.writeText(target.textStart);
+                    btn.textContent = '✓ copied';
+                } catch (err) {
+                    // no clipboard permission — select it so ⌘C still works
+                    const r = document.createRange();
+                    r.selectNodeContents($('quoteText'));
+                    getSelection().removeAllRanges();
+                    getSelection().addRange(r);
+                    btn.textContent = 'press ⌘C';
+                }
+            });
+        }
+
+        // Header toggle: open the pane on the current question's source, or close it.
+        function toggleSplit() {
+            if (document.body.classList.contains('split')) { closeArticle(); return; }
+            const q = questions[currentQuestion];
+            const src = q && getSource(q);
+            if (src && src.url && /^https?:/i.test(src.url)) openInArticle(src.url);
+        }
+
         // Render the "which paper/book/resource" citation chip on the question.
         // Title always shown; hyperlinked when a URL is available.
         function renderSource(question) {
@@ -1719,6 +1891,7 @@
                     ? `<div class="fb-sub"><button type="button" class="quiet" id="showInArticleBtn">Show in article →</button></div>`
                     : `<div class="fb-sub"><a href="${encodeURI(result.sourceUrl)}" target="_blank" rel="noopener noreferrer">source ↗</a></div>`) : ''}
                 <div class="action-status" id="actionStatus"></div>
+                <div id="quoteBox"></div>
                 <div id="aiFeedbackBox"></div>
             `;
             feedbackPanel.hidden = false;
@@ -1727,6 +1900,9 @@
             $('deleteBtn').addEventListener('click', e => deleteQuestionHandler(e.currentTarget, result, question));
             const aiBtn = $('aiBtn');
             if (aiBtn) aiBtn.addEventListener('click', () => aiCheck(aiBtn, result, question));
+            clearTimeout(quoteTimer);
+            const siaBtn = $('showInArticleBtn');
+            if (siaBtn) siaBtn.addEventListener('click', () => showInArticle(result.sourceUrl));
             // keep the feedback + controls visible without manual scrolling
             setTimeout(() => {
                 $('controls').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
