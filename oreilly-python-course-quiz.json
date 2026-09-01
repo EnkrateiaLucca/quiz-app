@@ -1,0 +1,88 @@
+[
+  {
+    "question": "In the course's SCRIPT loop (Spot, Compose, Request, Inspect, Prove, Turn), what does the 'I' step require you to do?",
+    "type": "multiple-choice",
+    "options": [
+      "Install the packages the script asks for before reading it",
+      "Inspect the AI-generated code before you run it, treating it as untrusted input",
+      "Iterate on the prompt until the AI stops making mistakes",
+      "Import the script into your personal tools folder"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "Which single tool does the course install so you can run its scripts without installing Python or managing virtual environments?",
+    "type": "open-ended",
+    "acceptedAnswers": ["uv", "astral uv", "uv run"]
+  },
+  {
+    "question": "In the automation ticket template (TASK / TRIGGER / TOUCHES / MUST NEVER / DONE MEANS), which field defines the blast radius before the AI writes any code?",
+    "type": "multiple-choice",
+    "options": [
+      "TASK",
+      "DONE MEANS",
+      "TOUCHES",
+      "TRIGGER"
+    ],
+    "correctAnswer": 2
+  },
+  {
+    "question": "According to the Run Gate, roughly how often do AI models suggest Python packages that do not actually exist?",
+    "type": "multiple-choice",
+    "options": [
+      "About 1 in 5 times",
+      "About 1 in 100 times",
+      "About 1 in 2 times",
+      "Almost never — package names are looked up automatically"
+    ],
+    "correctAnswer": 0
+  },
+  {
+    "question": "What is the one-word name the Run Gate gives to attackers registering the made-up package names that AI models hallucinate?",
+    "type": "open-ended",
+    "acceptedAnswers": ["slopsquatting", "slop squatting", "slop-squatting"]
+  },
+  {
+    "question": "You run the Lesson 09 capstone organizer with no flags. What happens?",
+    "type": "multiple-choice",
+    "options": [
+      "It organizes your real Downloads folder immediately",
+      "It prints the plan only — a dry run against its own practice sandbox folder, moving nothing",
+      "It errors out because a required --folder argument is missing",
+      "It moves files inside the practice sandbox but leaves the real Downloads alone"
+    ],
+    "correctAnswer": 1
+  },
+  {
+    "question": "Which flag must you add to the capstone organizer before it will actually move any files?",
+    "type": "open-ended",
+    "acceptedAnswers": ["--apply", "apply", "-apply", "the --apply flag"]
+  },
+  {
+    "question": "Lesson 06 teaches you to read a Python traceback. Which line does it tell you to read first?",
+    "type": "open-ended",
+    "acceptedAnswers": ["the last line", "last line", "last", "the last one", "bottom line", "the bottom line"]
+  },
+  {
+    "question": "Which Day 2 demo is the one designed to run unattended on a schedule via launchd or Task Scheduler?",
+    "type": "multiple-choice",
+    "options": [
+      "01 — document inbox",
+      "02 — data to dashboard",
+      "04 — tool to skill",
+      "03 — intelligence briefing"
+    ],
+    "correctAnswer": 3
+  },
+  {
+    "question": "The course describes a continuum: one-off automation → reusable tool → scheduled tool → ? What is the final rung?",
+    "type": "multiple-choice",
+    "options": [
+      "A packaged library published to PyPI",
+      "An agent-callable skill described in one markdown file",
+      "A web app with a user interface",
+      "A compiled binary you can share with teammates"
+    ],
+    "correctAnswer": 1
+  }
+]

@@ -1,0 +1,77 @@
+[
+  {
+    "question": "Newly introduced and difficult flashcards come back more often than old easy ones. What does the article give as the reason for that schedule?",
+    "type": "multiple-choice",
+    "options": [
+      "To finish all difficult material before any of the easier material starts",
+      "To ensure every card in the collection is seen the same number of times",
+      "To keep total daily review time constant as the collection keeps growing",
+      "To exploit the psychological spacing effect, which raises the rate of learning"
+    ],
+    "correctAnswer": 3,
+    "source": {
+      "title": "Spaced repetition — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Spaced_repetition#:~:text=in%20order%20to%20exploit%20the%20psychological%20spacing%20effect"
+    }
+  },
+  {
+    "question": "Ebbinghaus's 'forgetting curve' plots the loss of learned information over time. What did he postulate could curb that loss?",
+    "type": "multiple-choice",
+    "options": [
+      "Studying the information for far longer during one single sitting",
+      "Learning related items together so that each one reinforces the others",
+      "Reviewing the information at several intervals over a period of time",
+      "Testing the information immediately after the very first exposure"
+    ],
+    "correctAnswer": 2,
+    "source": {
+      "title": "Spaced repetition — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Spaced_repetition#:~:text=postulated%20that%20it%20can%20be%20curbed%20by%20reviewing%20such%20information%20at%20several%20intervals%20over%20a%20period%20of%20time"
+    }
+  },
+  {
+    "question": "In the expanding-interval method, what happens to the time interval when the subject recalls the fact correctly?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "doubled",
+      "it is doubled",
+      "doubles",
+      "the time is doubled",
+      "twice as long"
+    ],
+    "source": {
+      "title": "Spaced repetition — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Spaced_repetition#:~:text=If%20the%20subject%20is%20able%20to%20recall%20the%20information%20correctly%20the%20time%20is%20doubled"
+    }
+  },
+  {
+    "question": "In Landauer and Bjork's 1978 experiment, what pairing did the psychology students learn under expanding intervals?",
+    "type": "multiple-choice",
+    "options": [
+      "A sentence followed by the one word that was missing from it",
+      "A picture of an individual followed by that individual's name",
+      "A foreign word followed by its translation in their language",
+      "A written definition followed by the term that it defines"
+    ],
+    "correctAnswer": 1,
+    "source": {
+      "title": "Spaced repetition — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Spaced_repetition#:~:text=showing%20the%20students%20pictures%20of%20a%20certain%20individual%20followed%20by%20that%20individual%27s%20name"
+    }
+  },
+  {
+    "question": "Which 1932 book first proposed that spaced repetition could be used to improve learning, and who wrote it?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "Psychology of Study by C. A. Mace",
+      "C. A. Mace",
+      "Mace",
+      "C.A. Mace",
+      "Psychology of Study"
+    ],
+    "source": {
+      "title": "Spaced repetition — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Spaced_repetition#:~:text=first%20proposed%20in%20the%201932%20book%20Psychology%20of%20Study%20written%20by%20C.%20A.%20Mace"
+    }
+  }
+]

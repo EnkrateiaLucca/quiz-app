@@ -1,0 +1,369 @@
+[
+  {
+    "question": "In the three-level progressive disclosure system, why is the YAML frontmatter loaded into the system prompt while the SKILL.md body is not?",
+    "type": "multiple-choice",
+    "options": [
+      "The frontmatter is small enough to cache across sessions, while the body changes too often to be cached reliably",
+      "The frontmatter carries only enough signal for Claude to decide when the skill applies, so the full instructions stay out of context until they are needed",
+      "The frontmatter holds the tool permissions, and permissions must be resolved before Claude can decide which files it is allowed to open",
+      "The frontmatter is parsed by a separate validator process that requires it to be resident before any user turn begins"
+    ],
+    "correctAnswer": 1,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "The guide says a description MUST include two things. What are they?",
+    "type": "multiple-choice",
+    "options": [
+      "The author's name and a semantic version number",
+      "The required tools and the expected token cost",
+      "What the skill does and when to use it (trigger conditions)",
+      "The skill's category and the MCP server it depends on"
+    ],
+    "correctAnswer": 2,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Angle brackets (< >) are forbidden in frontmatter. What is the stated reason?",
+    "type": "multiple-choice",
+    "options": [
+      "Frontmatter appears in Claude's system prompt, so malicious content could inject instructions",
+      "They break the Markdown renderer used to display skills in Settings > Capabilities",
+      "The YAML parser interprets them as block scalars and silently truncates the description",
+      "They conflict with the template placeholder syntax used by bundled asset files"
+    ],
+    "correctAnswer": 0,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "A skill fires on unrelated queries and users start disabling it. What two fixes does the guide prescribe for this overtriggering?",
+    "type": "multiple-choice",
+    "options": [
+      "Shorten SKILL.md and move detail into references/ so less content competes for attention",
+      "Restrict allowed-tools and lower the number of skills enabled at once",
+      "Add negative triggers and make the description more specific about scope",
+      "Add more technical keywords and paraphrased trigger phrases to the description"
+    ],
+    "correctAnswer": 2,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "A skill loads reliably but Claude ignores an important validation step buried mid-document. Which remedy does the guide give for 'instructions buried'?",
+    "type": "multiple-choice",
+    "options": [
+      "Add an examples section showing a conversation where the step was performed correctly",
+      "Put critical instructions at the top, use ## Important or ## Critical headers, and repeat key points",
+      "Convert the instruction into a numbered workflow with explicit dependencies between steps",
+      "Split the instruction into its own reference file and link to it from the workflow step"
+    ],
+    "correctAnswer": 1,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "For a validation that absolutely must hold, the guide recommends bundling a script rather than writing the check as prose. What is the reason given?",
+    "type": "multiple-choice",
+    "options": [
+      "Scripts run outside the context window, so they do not consume tokens during the workflow",
+      "Scripts fail loudly with an error code, while prose instructions fail silently at the model layer",
+      "Scripts can be versioned independently of SKILL.md and updated without a re-upload",
+      "Code is deterministic while language interpretation is not"
+    ],
+    "correctAnswer": 3,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "The guide's 'Pro Tip' describes the approach the most effective skill creators use. What is it?",
+    "type": "multiple-choice",
+    "options": [
+      "Draft the skill with skill-creator, then run a baseline comparison before writing any bundled scripts",
+      "Enumerate every edge case up front so the first version handles the full range of inputs",
+      "Iterate on a single challenging task until Claude succeeds, then extract the winning approach into a skill",
+      "Write the description first, test triggering across 20 queries, and only then author the body instructions"
+    ],
+    "correctAnswer": 2,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "In the kitchen analogy, MCP is the professional kitchen. What are skills, and what does that map to functionally?",
+    "type": "multiple-choice",
+    "options": [
+      "The head chef — the orchestration layer that decides which tools get called, i.e. when Claude acts",
+      "The menu — the published surface users choose from, i.e. what Claude offers to do",
+      "The pantry — the stored domain data the workflow draws on, i.e. what Claude knows about the service",
+      "The recipes — step-by-step instructions on how to create something valuable, i.e. how Claude should use the service"
+    ],
+    "correctAnswer": 3,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "You want to know why Claude isn't loading your skill. What debugging question does the guide tell you to ask Claude directly?",
+    "type": "multiple-choice",
+    "options": [
+      "\"When would you use the [skill name] skill?\" — Claude quotes the description back so you can see what is missing",
+      "\"Rewrite the description of [skill name] so it triggers more often\" — Claude proposes keywords you omitted",
+      "\"Why did you not use the [skill name] skill on my last request?\" — Claude explains which trigger failed to match",
+      "\"List every skill currently enabled and their descriptions\" — then check for overlap with yours"
+    ],
+    "correctAnswer": 0,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "The guide contrasts 'problem-first' and 'tool-first' framings using a Home Depot analogy. What actually differs between them?",
+    "type": "multiple-choice",
+    "options": [
+      "Problem-first skills bundle scripts to enforce a sequence; tool-first skills rely on prose guidance the model can adapt",
+      "Problem-first skills describe an outcome and let the skill orchestrate the calls; tool-first skills assume tool access exists and supply the expertise for using it well",
+      "Problem-first skills are written for end users of a product; tool-first skills are written for the engineers maintaining the integration",
+      "Problem-first skills coordinate several MCP servers; tool-first skills wrap exactly one server's tools"
+    ],
+    "correctAnswer": 1,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Your skill loads correctly, but its MCP calls fail. Which diagnostic step does the guide give to isolate whether the fault is the skill or the server?",
+    "type": "multiple-choice",
+    "options": [
+      "Re-upload the zipped skill folder, since stale tool schemas persist from the previous version",
+      "Ask Claude to call the MCP directly without the skill — if that also fails, the issue is the MCP, not the skill",
+      "Disable every other skill and re-run, since a competing skill may be intercepting the same tool names",
+      "Check the token count of the workflow, since large contexts cause calls to be dropped before dispatch"
+    ],
+    "correctAnswer": 1,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "The guide warns that skills should not include a README.md inside the skill folder, yet still recommends one when distributing. Why the apparent contradiction?",
+    "type": "multiple-choice",
+    "options": [
+      "The README is generated at upload time from the frontmatter, so a hand-written one would be overwritten",
+      "The repo-level README serves human visitors, while skill-folder documentation belongs in SKILL.md or references/",
+      "The README duplicates the description field, which raises the risk of the skill triggering on the wrong queries",
+      "Claude.ai strips README.md during upload, so it survives only in the GitHub copy of the repo"
+    ],
+    "correctAnswer": 1,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "The guide describes skills as an open standard, similar to MCP. What does that portability claim buy an author, and what is the stated caveat?",
+    "type": "multiple-choice",
+    "options": [
+      "The same skill should work across AI platforms, though skills built for one platform's capabilities can note that in the compatibility field",
+      "The standard guarantees the frontmatter schema is stable, though instruction bodies may need rewriting per platform",
+      "Skills published under the standard are automatically listed in partner directories, though updates must be pushed manually",
+      "The same skill runs on any platform without change, since the standard forbids platform-specific dependencies entirely"
+    ],
+    "correctAnswer": 0,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Which situation does the guide point to the API for, rather than Claude.ai or Claude Code?",
+    "type": "multiple-choice",
+    "options": [
+      "Manual testing and iteration while a skill is still being developed",
+      "Individual ad-hoc workflows where the user drives each step",
+      "End users interacting with a skill directly in conversation",
+      "Production deployments at scale and automated agent pipelines"
+    ],
+    "correctAnswer": 3,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Responses feel slow and degraded once a skill is enabled. Which pair of causes does the guide name for these large-context issues?",
+    "type": "multiple-choice",
+    "options": [
+      "Skill content that is too large, and all content being loaded instead of using progressive disclosure",
+      "Bundled scripts running synchronously, and reference files being fetched on every turn",
+      "Too many MCP servers connected, and tool schemas being re-sent with each request",
+      "Long descriptions in frontmatter, and duplicated instructions between SKILL.md and assets"
+    ],
+    "correctAnswer": 0,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "The guide's example of countering model 'laziness' adds lines like 'Take your time' and 'Do not skip validation steps.' What caveat does it attach?",
+    "type": "multiple-choice",
+    "options": [
+      "The encouragement should be repeated at both the top and bottom of SKILL.md to survive long contexts",
+      "The encouragement works only when paired with a validation script that can detect the skipped step",
+      "The phrasing must avoid imperatives, since strong commands increase the risk of overtriggering",
+      "Adding this to user prompts is more effective than putting it in SKILL.md"
+    ],
+    "correctAnswer": 3,
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Name the one file every skill folder must contain, spelled exactly as required.",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "SKILL.md",
+      "SKILL.MD",
+      "skill.md"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "What is the character limit the guide gives for the description field?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "1024",
+      "1024 characters",
+      "1,024",
+      "under 1024"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Detailed documentation that would bloat SKILL.md should be moved into which optional subdirectory?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "references",
+      "references/",
+      "the references folder",
+      "references directory"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "The guide gives a size ceiling for SKILL.md before you should start offloading to references. What is it?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "5000 words",
+      "5,000 words",
+      "5000",
+      "under 5000 words",
+      "5k words"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Two word-prefixes are reserved and cannot appear in a skill's name. Name either one.",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "claude",
+      "anthropic",
+      "claude or anthropic",
+      "claude and anthropic"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Which optional frontmatter field restricts what tools a skill may invoke (e.g. \"Bash(python:*) WebFetch\")?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "allowed-tools",
+      "allowed_tools",
+      "allowed tools"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "Skills used through the Messages API require which beta capability, the one providing the secure environment skills run in?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "code execution tool",
+      "code execution",
+      "the code execution tool beta",
+      "code execution tool beta"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "How many concrete use cases does the guide say to identify before writing any code?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "2-3",
+      "2 to 3",
+      "two to three",
+      "2 or 3",
+      "three",
+      "3"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  },
+  {
+    "question": "The guide's headline triggering benchmark is a percentage of relevant queries the skill should fire on. What is it?",
+    "type": "open-ended",
+    "acceptedAnswers": [
+      "90%",
+      "90",
+      "90 percent",
+      "ninety percent"
+    ],
+    "source": {
+      "title": "The Complete Guide to Building Skills for Claude (Anthropic)",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf"
+    }
+  }
+]
