@@ -25,6 +25,7 @@ Usage:
 """
 
 import io
+import ipaddress
 import json
 import re
 import secrets
@@ -56,7 +57,7 @@ TOKEN = secrets.token_urlsafe(18)
 # endpoint stay open (that content is what you're handing to your own phone).
 GUARDED_ROUTES = ("/localfile", "/api/anki", "/api/ai/grade", "/api/ai/chat",
                   "/api/quiz/delete-question", "/api/quiz/update-question",
-                  "/api/quiz/delete", "/api/phone")
+                  "/api/quiz/delete", "/api/phone", "/api/article")
 
 _LAN_IP_CACHE = None
 
@@ -104,6 +105,229 @@ MIME = {
     ".opus": "audio/opus", ".aac": "audio/aac", ".flac": "audio/flac",
     ".mp4": "video/mp4", ".txt": "text/plain; charset=utf-8",
 }
+
+# ---------------------------------------------------------------- article proxy
+# The /api/article route fetches a source article server-side and returns it
+# iframe-ready (frame-blocking headers stripped, same-origin with the app), so the
+# split-view pane can render it and the parent can drive scroll/highlight over
+# postMessage. ARTICLE_HIGHLIGHTER_JS is injected into every proxied page.
+ARTICLE_MAX_BYTES = 5_000_000
+ARTICLE_TIMEOUT = 10
+
+ARTICLE_HIGHLIGHTER_JS = r"""
+<style>
+  mark.quiz-hl { background: #ffe58a; color: #1a1813 !important;
+    box-shadow: 0 0 0 3px #ffe58a; border-radius: 2px; scroll-margin: 120px; }
+  /* Many sites hide body content until a scroll-reveal script runs; we strip the
+     page's own scripts, so force the common JS-gated states visible for a readable
+     reader pane. Best-effort — imperfect on heavily client-rendered pages. */
+  html, body { opacity: 1 !important; }
+  [class*="fade"], [class*="reveal"], [class*="animate"], [class*="inview"],
+  [data-animate], [data-aos], [style*="opacity:0"], [style*="opacity: 0"] {
+    opacity: 1 !important; visibility: visible !important;
+    transform: none !important; filter: none !important;
+  }
+  /* Page-transition curtains / preloaders are normally removed by the site's JS
+     (which we strip), leaving a full-screen overlay covering the article. */
+  [class*="transition_wrap"], [class*="page-transition"], [class*="page_transition"],
+  [class*="preloader"], [class*="loading-screen"], [class*="loader_wrap"] {
+    display: none !important;
+  }
+</style>
+<script>
+(function () {
+  // Native Chrome text fragments (#:~:text=) don't activate inside an iframe, so
+  // the parent posts us a parsed target and we find + highlight it ourselves.
+  function clearHl() {
+    document.querySelectorAll('mark.quiz-hl').forEach(function (m) {
+      var p = m.parentNode;
+      while (m.firstChild) p.insertBefore(m.firstChild, m);
+      p.removeChild(m);
+      p.normalize();
+    });
+  }
+  // Concatenate visible text nodes + keep a map back to (node, offset).
+  function collectText() {
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        if (!n.nodeValue) return NodeFilter.FILTER_REJECT;
+        var t = n.parentNode && n.parentNode.nodeName;
+        if (t === 'SCRIPT' || t === 'STYLE' || t === 'NOSCRIPT')
+          return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var full = '', map = [], n;
+    while ((n = walker.nextNode())) { map.push({ node: n, start: full.length }); full += n.nodeValue; }
+    return { full: full, map: map };
+  }
+  function posAt(map, off) {
+    for (var i = map.length - 1; i >= 0; i--) {
+      if (map[i].start <= off) return { node: map[i].node, offset: off - map[i].start };
+    }
+    return null;
+  }
+  // Escape regex metachars, then make every run of whitespace tolerant (\s+) so a
+  // fragment string matches DOM text even when it wraps or splits across inline tags.
+  function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'); }
+  function findRange(tgt) {
+    if (!tgt.textStart) return null;
+    var t = collectText();
+    var pat = esc(tgt.textStart);
+    if (tgt.textEnd) pat += '[\\s\\S]*?' + esc(tgt.textEnd);
+    var m;
+    try { m = new RegExp(pat).exec(t.full); } catch (e) { return null; }
+    if (!m) return null;
+    var s = posAt(t.map, m.index), e = posAt(t.map, m.index + m[0].length);
+    if (!s || !e) return null;
+    var r = document.createRange();
+    try { r.setStart(s.node, s.offset); r.setEnd(e.node, e.offset); } catch (err) { return null; }
+    return r;
+  }
+  // Tell the parent whether we actually landed on the passage, so it can fall
+  // back to showing the quote inline for a manual ⌘F.
+  function report(found) {
+    if (window.parent && window.parent !== window)
+      window.parent.postMessage({ type: 'quiz-highlight-result', found: !!found }, '*');
+  }
+  function highlight(tgt) {
+    clearHl();
+    if (!tgt) return report(false);
+    if (tgt.kind === 'anchor') {
+      var el = document.getElementById(tgt.id) || document.getElementsByName(tgt.id)[0];
+      if (el) el.scrollIntoView({ block: 'center' });
+      return report(!!el);
+    }
+    // full match, else fall back to a textStart-only match (still highlights something)
+    var r = findRange(tgt) || (tgt.textEnd ? findRange({ textStart: tgt.textStart }) : null);
+    if (!r) return report(false);
+    var mk = document.createElement('mark');
+    mk.className = 'quiz-hl';
+    try { r.surroundContents(mk); }
+    catch (e) { mk.appendChild(r.extractContents()); r.insertNode(mk); }
+    mk.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    report(true);
+  }
+  // Hide big fixed/absolute opaque overlays that carry no text — page-transition
+  // curtains the stripped JS would normally have removed. Heuristic, best-effort.
+  function deCurtain() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    document.querySelectorAll('body *').forEach(function (el) {
+      var s = window.getComputedStyle(el);
+      if (s.position !== 'fixed' && s.position !== 'absolute') return;
+      var r = el.getBoundingClientRect();
+      if (r.width < vw * 0.9 || r.height < vh * 0.9) return;   // must ~cover viewport
+      var bg = s.backgroundColor;
+      var opaque = bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent'
+        && !/rgba\([^)]+,\s*0(\.0+)?\)/.test(bg);
+      if (opaque && (el.innerText || '').trim().length < 20) el.style.display = 'none';
+    });
+  }
+  window.addEventListener('message', function (ev) {
+    var d = ev.data || {};
+    if (d.type === 'quiz-highlight') highlight(d.target);
+  });
+  window.addEventListener('load', function () {
+    try { deCurtain(); } catch (e) {}
+    if (window.parent && window.parent !== window)
+      window.parent.postMessage({ type: 'quiz-article-ready' }, '*');
+  });
+})();
+</script>
+"""
+
+
+def _host_is_public(host: str) -> bool:
+    """True only if every address `host` resolves to is a public/global IP.
+
+    Load-bearing SSRF guard: a hostname allowlist alone is bypassable via DNS, so
+    we resolve and reject loopback / private / link-local / reserved / multicast
+    (blocks localhost, 127.*, 10/8, 172.16/12, 192.168/16, 169.254/16 metadata,
+    ::1, fc00::/7, fe80::/10)."""
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError:
+        return False
+    if not infos:
+        return False
+    for *_, sockaddr in infos:
+        try:
+            ip = ipaddress.ip_address(sockaddr[0])
+        except ValueError:
+            return False
+        if (ip.is_loopback or ip.is_private or ip.is_link_local
+                or ip.is_reserved or ip.is_multicast or ip.is_unspecified):
+            return False
+    return True
+
+
+class _SafeRedirect(urllib.request.HTTPRedirectHandler):
+    """Re-validate every redirect hop so a public URL can't 302 into a private IP
+    (e.g. the cloud metadata endpoint)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urllib.parse.urlparse(newurl)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname \
+                or not _host_is_public(parsed.hostname):
+            raise urllib.error.HTTPError(newurl, code, "blocked redirect host", headers, fp)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def fetch_article(raw_url: str) -> tuple[int, str, bytes]:
+    """Fetch a source article for the split-view pane. Returns (status, content_type,
+    body). HTML is rewritten iframe-ready: own scripts stripped, <base> + our
+    highlighter injected, frame-blocking headers dropped (we send our own)."""
+    u = urllib.parse.urlparse(raw_url)
+    if u.scheme not in ("http", "https") or not u.hostname:
+        return 400, "text/plain; charset=utf-8", b"http(s) url required"
+    if not _host_is_public(u.hostname):
+        return 403, "text/plain; charset=utf-8", b"blocked host"
+
+    opener = urllib.request.build_opener(_SafeRedirect())
+    req = urllib.request.Request(raw_url, headers={
+        "User-Agent": "Mozilla/5.0 (quiz-app article reader)",
+        "Accept": "text/html,application/xhtml+xml",
+    })
+    try:
+        with opener.open(req, timeout=ARTICLE_TIMEOUT) as resp:
+            ctype = resp.headers.get("Content-Type", "text/html")
+            data = resp.read(ARTICLE_MAX_BYTES + 1)
+    except (urllib.error.URLError, OSError, TimeoutError, ValueError):
+        return 502, "text/html; charset=utf-8", (
+            b"<!doctype html><meta charset=utf-8>"
+            b"<p style='font:15px system-ui;padding:2rem;color:#555'>"
+            b"Could not load the source article.</p>")
+    if len(data) > ARTICLE_MAX_BYTES:
+        data = data[:ARTICLE_MAX_BYTES]
+
+    # Non-HTML (PDF, etc.): stream through untouched with upstream headers dropped.
+    if "html" not in ctype.lower():
+        return 200, ctype, data
+
+    charset = "utf-8"
+    m = re.search(r"charset=([\w-]+)", ctype, re.I)
+    if m:
+        charset = m.group(1)
+    else:
+        m = re.search(rb'<meta[^>]+charset=["\']?([\w-]+)', data[:4096], re.I)
+        if m:
+            charset = m.group(1).decode("ascii", "replace")
+    try:
+        html = data.decode(charset, "replace")
+    except LookupError:
+        html = data.decode("utf-8", "replace")
+
+    # Neutralize the page's own JS (frame is same-origin to the app) and inject ours.
+    html = re.sub(r"<script\b[^>]*>.*?</script>", "", html, flags=re.I | re.S)
+    origin = f"{u.scheme}://{u.netloc}/"
+    inject = f'<base href="{origin}">' + ARTICLE_HIGHLIGHTER_JS
+    if re.search(r"<head[^>]*>", html, re.I):
+        html = re.sub(r"(<head[^>]*>)", lambda mo: mo.group(1) + inject, html,
+                      count=1, flags=re.I)
+    else:
+        html = inject + html
+    return 200, "text/html; charset=utf-8", html.encode("utf-8")
+
 
 # Quiz files opened from outside ROOT (via CLI arg), keyed by basename.
 REGISTERED: dict[str, Path] = {}
@@ -650,6 +874,16 @@ class Handler(BaseHTTPRequestHandler):
                     and p.is_relative_to(Path.home())):
                 return self.send_error(403)
             return self._file(p)
+
+        if route == "/api/article":
+            status, ctype, body = fetch_article(params.get("url", [""])[0])
+            self.send_response(status)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+            return
 
         # static files from ROOT
         if route == "/":

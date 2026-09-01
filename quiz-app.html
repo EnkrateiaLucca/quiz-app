@@ -65,6 +65,49 @@
             padding: 36px 24px 60px;
         }
 
+        /* ── split view: source article beside the quiz ───── */
+        body.split .shell {
+            max-width: 1180px;
+            display: grid;
+            grid-template-columns: minmax(0, 620px) minmax(0, 1fr);
+            grid-template-areas:
+                "header  header"
+                "start   start"
+                "quiz    article"
+                "results results";
+            column-gap: 28px;
+            align-items: start;
+        }
+        body.split header        { grid-area: header; }
+        body.split #startScreen  { grid-area: start; }
+        body.split #quizScreen   { grid-area: quiz; min-width: 0; }
+        body.split #resultsScreen { grid-area: results; }
+
+        #articlePane {
+            grid-area: article;
+            position: sticky; top: 24px;
+            height: calc(100vh - 48px);
+            display: flex; flex-direction: column;
+            border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+            background: var(--raised);
+        }
+        .article-head {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; border-bottom: 1px solid var(--line);
+            font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--ink-40);
+        }
+        .article-head .a-title {
+            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            color: var(--ink-60);
+        }
+        .article-head .a-open, .article-head .a-close {
+            color: var(--ink-40); text-decoration: none; cursor: pointer;
+            background: none; border: none; font-size: 15px; line-height: 1; padding: 0 2px;
+        }
+        .article-head .a-open:hover, .article-head .a-close:hover { color: var(--ink); }
+        #articleFrame { flex: 1; width: 100%; border: 0; background: #fff; }
+
         header {
             display: flex;
             justify-content: space-between;
@@ -745,6 +788,14 @@
             .fb-actions { margin-left: 0; width: 100%; }
             #tutorPanel { width: 100vw; border-left: none; }
             #tutorLauncher { left: 12px; bottom: 12px; }
+            /* article pane degrades from side-by-side to a full-screen slide-in */
+            body.split .shell { display: block; max-width: 620px; }
+            #articlePane {
+                position: fixed; inset: 0; top: 0; z-index: 60; height: 100%;
+                border: 0; border-radius: 0;
+                transform: translateX(100%); transition: transform .24s ease;
+            }
+            body.split.article-open #articlePane { transform: translateX(0); }
         }
     </style>
 </head>
@@ -784,6 +835,9 @@
             <span class="meta" id="headerLeft">Quizzes</span>
             <span class="header-right">
                 <span class="meta" id="headerRight"></span>
+                <button id="splitToggle" class="quit-quiz" hidden aria-label="Read source article alongside the quiz">
+                    <span class="qq-label">📖 Article</span>
+                </button>
                 <button id="quitQuizBtn" class="quit-quiz" hidden aria-label="Back to quizzes">
                     <span class="qq-label">Quizzes</span><span class="qq-x">✕</span>
                     <span class="qq-tip">Back to quizzes · progress is saved</span>
@@ -854,6 +908,9 @@
                             <code>{"title": "…", "url": "…"}</code>, a plain
                             <code>"title"</code> string, or the legacy
                             <code>sourceTitle</code>/<code>sourceUrl</code> fields.
+                            When <code>url</code> carries a text-fragment deep-link
+                            (<code>…#:~:text=exact%20passage</code>), the server-run app can
+                            open the source article beside the quiz and highlight that passage.
                         </p>
                     </div>
                 </details>
@@ -879,6 +936,17 @@
                 </div>
             </div>
         </section>
+
+        <!-- ══ SOURCE ARTICLE (split view) ══ -->
+        <aside id="articlePane" hidden aria-label="Source article">
+            <div class="article-head">
+                <span class="a-title" id="articleTitle">Source</span>
+                <a class="a-open" id="articleOpenTab" target="_blank" rel="noopener noreferrer" title="Open in new tab">↗</a>
+                <button class="a-close" id="articleClose" aria-label="Hide article">×</button>
+            </div>
+            <iframe id="articleFrame" title="Source article"
+                    sandbox="allow-same-origin allow-scripts allow-popups"></iframe>
+        </aside>
 
         <!-- ══ RESULTS ══ -->
         <section id="resultsScreen" hidden>
@@ -1311,7 +1379,8 @@
             const onQuiz = el === quizScreen;
             tutorLauncher.hidden = !onQuiz;
             quitQuizBtn.hidden = !onQuiz;
-            if (!onQuiz) closeTutor();
+            $('splitToggle').hidden = !(onQuiz && serverMode && quizHasSource());
+            if (!onQuiz) { closeTutor(); closeArticle(); }
         }
 
         function updateChrome() {
@@ -1466,6 +1535,11 @@
                 a.rel = 'noopener noreferrer';
                 a.textContent = src.title;
                 a.title = src.title;
+                // In server mode, clicking the chip opens the source in the split
+                // pane instead of a new tab; file mode keeps the plain link.
+                if (serverMode && /^https?:/i.test(src.url)) {
+                    a.addEventListener('click', e => { e.preventDefault(); openInArticle(src.url); });
+                }
                 label.appendChild(a);
             } else {
                 label.textContent = src.title;
@@ -1546,7 +1620,7 @@
                 isCorrect,
                 skipped: false,
                 explanation: question.explanation || null,
-                sourceUrl: question.sourceUrl || null,
+                sourceUrl: (getSource(question) || {}).url || null,
                 type: question.type
             };
             results.push(result);
@@ -1566,7 +1640,7 @@
                 isCorrect: false,
                 skipped: true,
                 explanation: question.explanation || null,
-                sourceUrl: question.sourceUrl || null,
+                sourceUrl: (getSource(question) || {}).url || null,
                 type: question.type
             };
             results.push(result);
@@ -1630,7 +1704,9 @@
                     </span>
                 </div>
                 ${question.explanation ? `<div class="fb-sub">${escapeHtml(question.explanation)}</div>` : ''}
-                ${result.sourceUrl ? `<div class="fb-sub"><a href="${encodeURI(result.sourceUrl)}" target="_blank" rel="noopener noreferrer">source ↗</a></div>` : ''}
+                ${result.sourceUrl ? (serverMode && /^https?:/i.test(result.sourceUrl)
+                    ? `<div class="fb-sub"><button type="button" class="quiet" id="showInArticleBtn">Show in article →</button></div>`
+                    : `<div class="fb-sub"><a href="${encodeURI(result.sourceUrl)}" target="_blank" rel="noopener noreferrer">source ↗</a></div>`) : ''}
                 <div class="action-status" id="actionStatus"></div>
                 <div id="aiFeedbackBox"></div>
             `;
@@ -1897,6 +1973,7 @@
             }
             const btn = $('bulkAnkiBtn');
             btn.disabled = true;
+            btn.textContent = 'adding\u2026';
             let added = 0, dupes = 0, failed = 0;
             for (let i = 0; i < selected.length; i++) {
                 setResultsStatus(`Sending to Anki… ${i + 1}/${selected.length}`);
@@ -2324,6 +2401,8 @@
         skipBtn.addEventListener('click', skipQuestionHandler);
         nextBtn.addEventListener('click', goToNextQuestion);
         prevBtn.addEventListener('click', goToPrevQuestion);
+        $('splitToggle').addEventListener('click', toggleSplit);
+        $('articleClose').addEventListener('click', closeArticle);
         $('retakeBtn').addEventListener('click', retakeHandler);
         $('newQuizBtn').addEventListener('click', newQuizHandler);
         $('deleteQuizBtn').addEventListener('click', e => deleteQuizHandler(e.currentTarget));
