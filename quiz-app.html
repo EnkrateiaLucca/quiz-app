@@ -1936,6 +1936,9 @@
             delete delBtn.dataset.armed;
             delBtn.classList.remove('armed');
             delBtn.textContent = 'Delete quiz';
+            const ankiBulk = $('bulkAnkiBtn');
+            ankiBulk.disabled = false;
+            ankiBulk.textContent = '\u2192 Anki';
             $('resultsStatus').textContent = '';
             progressFill.style.width = '100%';
             headerRight.innerHTML = '';
@@ -1967,10 +1970,7 @@
         async function bulkAnki() {
             const selected = getSelectedResults();
             if (!selected.length) return setResultsStatus('Nothing selected.');
-            if (!serverMode) {
-                const txt = selected.map(r => `${r.question}; ${r.correctAnswer}`).join('\n');
-                return downloadFile(txt, 'anki_cards.txt', 'text/plain');
-            }
+            if (!serverMode) return setResultsStatus('Anki needs the local server \u2014 run `quiz` in your terminal.');
             const btn = $('bulkAnkiBtn');
             btn.disabled = true;
             btn.textContent = 'adding\u2026';
@@ -1985,6 +1985,7 @@
                 } catch { failed++; }
             }
             btn.disabled = false;
+            btn.textContent = added ? `\u2713 ${added} in Anki` : '\u2192 Anki';
             setResultsStatus(`Anki: ${added} added${dupes ? `, ${dupes} duplicates skipped` : ''}${failed ? `, ${failed} failed` : ''}.`);
         }
 
